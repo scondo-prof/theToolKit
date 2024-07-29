@@ -28,13 +28,24 @@ def get_github_repositories(token: str,org: str) -> list:
             url = f"https://api.github.com/orgs/{org}/repos?page={count}"
             response = httpx.get(url, headers=headers)
             repos += response.json()
-        print(len(repos))
         return repos
             
     else:
         print(f"Failed to fetch repositories: {response.status_code}")
         print(response.json())
-        return None
+        return {}
+    
+
+def get_repository_names_urls(repos: list) -> dict:
+    repo_names_urls = {}
+
+    for repo in repos:
+        repo_names_urls[repo["name"]] = repo["html_url"]
+    
+    return repo_names_urls
+    
+
+
     
 
 def main():
@@ -43,11 +54,13 @@ def main():
     token = secrets["token"]
     org = secrets["org"]
     
-    repositories = get_github_repositories(token=token, org=org)
+    repos = get_github_repositories(token=token, org=org)
+
+    repo_names_urls = get_repository_names_urls(repos=repos)
+
+    print(repo_names_urls)
     
-    if repositories:
-        for repo in repositories:
-            print(f"- {repo['name']} ({repo['html_url']})")
+    
 
 
 
