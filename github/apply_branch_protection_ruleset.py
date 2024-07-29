@@ -87,7 +87,7 @@ def apply_repo_ruleset(repo_name: str, org: str, token: str) -> None:
 
 
 
-def get_ruleset_info(repo_name: str, org: str, token: str, ruleset_id: str):
+def get_ruleset_info(repo_name: str, org: str, token: str, ruleset_id: str) -> dict:
     url = f"https://api.github.com/repos/{org}/{repo_name}/rulesets/{ruleset_id}"
     headers = {
         "Accept": "application/vnd.github+json",
@@ -98,8 +98,9 @@ def get_ruleset_info(repo_name: str, org: str, token: str, ruleset_id: str):
     response = httpx.get(url, headers=headers)
 
     print(response.json())
+    return response.json()
 
-def org_repository_compliance():
+def main() -> None:
     github_secrets = json.loads(os.getenv("github_secrets"))
     org = github_secrets["org"]
     token = github_secrets["token"]
@@ -123,10 +124,5 @@ def org_repository_compliance():
         else:
             print(f"-- Need to Make Rule --")
             apply_repo_ruleset(repo_name=repo_name, org=org, token=token)
-
-def main():
-    org_repository_compliance()
-    
-
 
 main()
