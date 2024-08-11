@@ -2,15 +2,17 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 import os
 import sys
+import re
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.files_and_directories import list_files_recursively
+from utils.files_and_directories import list_files_recursively, move_file
 
 # Initialize a session using Amazon S3
 s3_client = boto3.client('s3')
 
-def upload_s3_obj(dir_path, object_name, s3_path) -> str:
+def upload_s3_obj(file_name, object_name, s3_path) -> str:
 
     config = TransferConfig(
         multipart_threshold=1024 * 25,  # 25MB
@@ -21,7 +23,7 @@ def upload_s3_obj(dir_path, object_name, s3_path) -> str:
 
     try:
         response = s3_client.upload_file(
-            Filename = dir_path + "\\" + object_name, 
+            Filename = file_name,
             Bucket = os.getenv("S3_BUCKET"), 
             Key = s3_path+object_name,
             Config = config
@@ -49,13 +51,20 @@ def bulk_s3_upload(dir_path):
         s3_path = ""
         for key in identifiers:
             if key in file:
-                s3_path = identifiers[key]
+                file_name = file.split("\\")[-1]
+                s3_path = identifiers[key] + file_name
                 print(s3_path)
                 break
         
         if s3_path:
             print(f"About to upload: {file}")
-            response = upload_s3_obj(dir_path=dir_path, object_name=file, s3_path=s3_path)
+            response = upload_s3_obj(file_name=file, object_name=file, s3_path=s3_path)
+            new_path = re.sub(r"\\raw.*", rf"\\processed\\{file_name}", file)
+            print(f"New Path: {new_path}")
+            move_file(source_path=file, destination_path=new_path)
             print(f"Response: {response}")
+
+
+
 
 bulk_s3_upload(dir_path="C:\\Users\\scott\\OneDrive\\Documents\\drones\\raw")
