@@ -3,7 +3,7 @@ $negName = Read-Host -Prompt "Enter the name for your NEG"
 $regionName = Read-Host -Prompt "Enter the name for your GCP Region"
 $cloudRunServiceName = Read-Host -Prompt "Enter the name for your Cloud Run Service"
 
-# Run the gcloud command with the user-provided values
+# Run the gcloud command with the user-provided value
 gcloud compute network-endpoint-groups create $negName `
   --region=$regionName `
   --network-endpoint-type=serverless `
