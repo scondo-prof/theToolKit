@@ -1,7 +1,4 @@
-import random
 import sys
-
-from math import floor
 
 
 def new_char(input_char_integer: int, shifter: int):
