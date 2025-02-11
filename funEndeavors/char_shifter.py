@@ -1,10 +1,7 @@
-import random
 import sys
 
-from math import floor
 
-
-def new_char(input_char_integer: int, shifter: int):
+def new_char(input_char_integer: int, shifter: int, shift: bool) -> chr:
     valid_char_integers = [
         48,
         49,
@@ -77,7 +74,10 @@ def new_char(input_char_integer: int, shifter: int):
                 break
             index += 1
 
-        new_char_index = index + shifter
+        if shift:
+            new_char_index = index + shifter
+        else:
+            new_char_index = index - shifter
         new_char = chr(valid_char_integers[new_char_index % 62])
 
         return new_char
@@ -85,21 +85,33 @@ def new_char(input_char_integer: int, shifter: int):
         return chr(input_char_integer)
 
 
-def char_shifter(input_str: str, shifter: int) -> str:
+def char_shifter(input_str: str, shifter: int, shift: bool) -> str:
     """Shifts the characters in the input string the amount of chars in the second input."""
     shifted_text = ""
     for char in input_str:
-        shifted_text += new_char(input_char_integer=ord(char), shifter=shifter)
+        shifted_text += new_char(
+            input_char_integer=ord(char), shifter=shifter, shift=shift
+        )
 
     return shifted_text
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python char_shifter.py '<input_string>' '<shifter-int>'")
+        print("Usage: python char_shifter.py '<input_string>' '<shifter-int>' '<1/0>'")
         sys.exit(1)
 
     input_str = sys.argv[1]
     shifter = int(sys.argv[2])
-    shifted_text = char_shifter(input_str=input_str, shifter=shifter)
-    print(shifted_text)
+    shift = int(sys.argv[3])
+
+    if shift == 0:
+        shift = False
+        shifted_text = char_shifter(input_str=input_str, shifter=shifter, shift=shift)
+        print(shifted_text)
+    elif shift == 1:
+        shift = True
+        shifted_text = char_shifter(input_str=input_str, shifter=shifter, shift=shift)
+        print(shifted_text)
+    else:
+        print("Argument in space 3 must be either 1 || 0")
