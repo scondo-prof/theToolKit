@@ -16,4 +16,4 @@ if __name__ == "__main__":
 
     input_text = sys.argv[1]  # Get input from the command line argument
     shuffled_text = dyslexic_dance(input_text)
-    print(shuffled_text)
+    print(f"wild tuna: {shuffled_text}")
