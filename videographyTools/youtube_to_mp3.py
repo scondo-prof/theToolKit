@@ -1,7 +1,10 @@
-from pytube import YouTube
+from pytubefix import YouTube
+from pytubefix.cli import on_progress
 
-def test(url:str) -> None:
-    yt = YouTube(url=url)
-    print(yt.fmt_streams)
+url = "https://www.youtube.com/watch?v=YpKx1tQ6VG0"
 
-test(url="https://www.youtube.com/watch?v=fCrxXlthvMY")
+yt = YouTube(url, on_progress_callback=on_progress)
+print(yt.title)
+
+ys = yt.streams.get_audio_only()
+ys.download()
