@@ -26,7 +26,19 @@ foreach ($dir in $terraformDirs) {
         Write-Host "✅ terraform init succeeded in ${relativePath}"
     }
     else {
-        Write-Host "❌ terraform init failed in ${relativePath}: $initOutput"
+        Write-Host "⚠️ terraform init failed in ${relativePath}: $initOutput"
+        
+        # Check if the error suggests a provider version issue
+        if ($initOutput -match "does not match configured version constraint|must use terraform init -upgrade") {
+            Write-Host "🔄 Retrying with 'terraform init -upgrade' in ${relativePath}..."
+            $upgradeOutput = terraform init -upgrade -no-color 2>&1
+            if ($?) {
+                Write-Host "✅ terraform init -upgrade succeeded in ${relativePath}"
+            }
+            else {
+                Write-Host "❌ terraform init -upgrade failed in ${relativePath}: $upgradeOutput"
+            }
+        }
     }
     Pop-Location
 }
