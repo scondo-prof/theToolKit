@@ -1,7 +1,7 @@
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 
-url = "https://www.youtube.com/watch?v=DtcnsPtv_kk"
+url = "https://www.youtube.com/watch?v=GMrZfIIVra8"
 
 yt = YouTube(url, on_progress_callback=on_progress)
 print(yt.title)
