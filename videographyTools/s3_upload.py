@@ -1,9 +1,9 @@
 import asyncio
 import os
+import re
 import sys
 
 import aioboto3
-import aioboto3.session
 from boto3.s3.transfer import TransferConfig
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -38,6 +38,7 @@ async def upload_s3_obj(file_name: str, s3_key: str) -> str:
 async def bulk_s3_upload(s3_path: str) -> list[str]:
     dir_path = os.getcwd()
     all_files = list_files_recursively(dir_path)
+    tasks = []
     results = []
 
     async def upload_task(file_path: str, s3_path: str):
@@ -56,11 +57,27 @@ S3 Key: {s3_key}"""
         result = await upload_s3_obj(file_name=file_path, s3_key=s3_key)
         return result
 
-    tasks = [upload_task(file_path=file_path, s3_path=s3_path) for file_path in all_files]
+    for file_path in all_files:
+        if not ".git" in file_path:
+            tasks.append(upload_task(file_path=file_path, s3_path=s3_path))
+    # tasks = [upload_task(file_path=file_path, s3_path=s3_path) for file_path in all_files]
     print("Files Gathered and Ready For Upload")
     results = await asyncio.gather(*tasks)
     return results
 
+
+if __name__ == "__main__":
+    pattern = r"^(?:[\w\-]+/)+$"
+
+    while True:
+        user_s3_path = input("Enter the S3 path prefix (e.g., 'my-folder/'): ")
+        if re.match(pattern, user_s3_path):
+            break
+        print(
+            "Invalid format. Please ensure the path ends with '/' and contains only letters, digits, underscores, or hyphens."
+        )
+
+    asyncio.run(bulk_s3_upload(s3_path=user_s3_path))
 
 # asyncio.run(upload_s3_obj(file_name="z.txt", s3_key="test/z.txt"))
 
