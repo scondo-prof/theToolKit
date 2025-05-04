@@ -3,16 +3,16 @@ import os
 import re
 import sys
 
-import aioboto3
+import boto3
 from boto3.s3.transfer import TransferConfig
+from botocore.exceptions import BotoCoreError, ClientError
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.files_and_directories import list_files_recursively, move_file
+from utils.files_and_directories import list_files_recursively
 
 
-async def upload_s3_obj(file_name: str, s3_key: str, s3_bucket: str) -> str:
-
+async def upload_s3_obj(file_name: str, s3_key: str, s3_bucket: str, max_retries: int = 3) -> str:
     config = TransferConfig(
         multipart_threshold=1024 * 8,
         max_concurrency=16,
@@ -20,17 +20,26 @@ async def upload_s3_obj(file_name: str, s3_key: str, s3_bucket: str) -> str:
         use_threads=True,
     )
 
-    print(f"About to upload file with S3 key: {s3_key}")
-    try:
-        print("Inside Catch")
-        session = aioboto3.Session()
-        print("session made")
-        async with session.client("s3") as s3_client:
-            response = await s3_client.upload_file(Filename=file_name, Bucket=s3_bucket, Key=s3_key, Config=config)
+    for attempt in range(1, max_retries + 1):
+        print(f"Attempt {attempt}: Uploading {s3_key}")
+        try:
+            await asyncio.to_thread(
+                boto3.client("s3").upload_file,
+                Filename=file_name,
+                Bucket=s3_bucket,
+                Key=s3_key,
+                Config=config,
+            )
             print(f"Successfully Uploaded: {s3_key}")
-
-    except Exception as e:
-        return f"Failed Upload for {s3_key}: {e}"
+            return f"Successfully Uploaded {s3_key}"
+        except (BotoCoreError, ClientError, Exception) as e:
+            print(f"Upload failed on attempt {attempt} for {s3_key}: {e}")
+            if attempt < max_retries:
+                backoff = 2**attempt
+                print(f"Retrying in {backoff} seconds...")
+                await asyncio.sleep(backoff)
+            else:
+                return f"Failed Upload for {s3_key} after {max_retries} attempts: {e}"
 
 
 async def bulk_s3_upload(s3_path: str, s3_bucket: str) -> list[str]:
