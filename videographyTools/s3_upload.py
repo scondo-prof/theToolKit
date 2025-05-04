@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.files_and_directories import list_files_recursively, move_file
 
 
-async def upload_s3_obj(file_name: str, s3_key: str) -> str:
+async def upload_s3_obj(file_name: str, s3_key: str, s3_bucket: str) -> str:
 
     config = TransferConfig(
         multipart_threshold=1024 * 8,
@@ -26,16 +26,14 @@ async def upload_s3_obj(file_name: str, s3_key: str) -> str:
         session = aioboto3.Session()
         print("session made")
         async with session.client("s3") as s3_client:
-            response = await s3_client.upload_file(
-                Filename=file_name, Bucket=os.getenv("S3_BUCKET"), Key=s3_key, Config=config
-            )
+            response = await s3_client.upload_file(Filename=file_name, Bucket=s3_bucket, Key=s3_key, Config=config)
             print(f"Successfully Uploaded: {s3_key}")
 
     except Exception as e:
         return f"Failed Upload for {s3_key}: {e}"
 
 
-async def bulk_s3_upload(s3_path: str) -> list[str]:
+async def bulk_s3_upload(s3_path: str, s3_bucket: str) -> list[str]:
     dir_path = os.getcwd()
     all_files = list_files_recursively(dir_path)
     tasks = []
@@ -54,7 +52,7 @@ To be Uploaded To
 S3 Key: {s3_key}"""
         )
 
-        result = await upload_s3_obj(file_name=file_path, s3_key=s3_key)
+        result = await upload_s3_obj(file_name=file_path, s3_key=s3_key, s3_bucket=s3_bucket)
         return result
 
     for file_path in all_files:
@@ -67,17 +65,24 @@ S3 Key: {s3_key}"""
 
 
 if __name__ == "__main__":
-    pattern = r"^(?:[\w\-]+/)+$"
+    s3_path_pattern = r"^(?:[\w\-]+/)+$"
+    s3_bucket_pattern = r"^(?!^(?:\d{1,3}\.){3}\d{1,3}$)(?!.*\.\.)(?!.*\.$)[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$"
 
     while True:
         user_s3_path = input("Enter the S3 path prefix (e.g., 'my-folder/'): ")
-        if re.match(pattern, user_s3_path):
+        user_s3_bucket = input("Enter the S3 Bucket Name (e.g., 'my-test-bucket'): ")
+        if re.match(s3_path_pattern, user_s3_path) and re.match(s3_bucket_pattern, user_s3_bucket):
             break
-        print(
-            "Invalid format. Please ensure the path ends with '/' and contains only letters, digits, underscores, or hyphens."
-        )
+        if not re.match(s3_path_pattern, user_s3_path):
+            print(
+                "Invalid format for S3 Path Prefix: Please ensure the path ends with '/' and contains only letters, digits, underscores, or hyphens."
+            )
+        if not re.match(s3_bucket_pattern, user_s3_bucket):
+            print(
+                "Invalid format for S3 Bucket Name: Please ensure your bucket name follows these parameters: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html"
+            )
 
-    asyncio.run(bulk_s3_upload(s3_path=user_s3_path))
+    asyncio.run(bulk_s3_upload(s3_path=user_s3_path, s3_bucket=user_s3_bucket))
 
 # asyncio.run(upload_s3_obj(file_name="z.txt", s3_key="test/z.txt"))
 
