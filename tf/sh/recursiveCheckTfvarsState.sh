@@ -1,29 +1,28 @@
 #!/bin/bash
 
-# Base directory to start the search
+# Check-TfvarsWithWorkspaces.sh
+
 base_dir=$(pwd)
 with_state=()
 no_state=()
 
-# Find all directories that contain .tfvars files
+# Find all unique directories containing .tfvars files
 mapfile -t tfvars_dirs < <(find "$base_dir" -type f -name "*.tfvars" -exec dirname {} \; | sort -u)
 total=${#tfvars_dirs[@]}
 index=1
 
-# Loop through each directory
 for dir in "${tfvars_dirs[@]}"; do
     echo "[$index / $total] Checking directory: $dir"
-
     pushd "$dir" >/dev/null
 
-    # Initialize Terraform if needed
+    # Initialize Terraform if .terraform is missing
     if [ ! -d ".terraform" ]; then
-        echo "Initializing Terraform..."
+        echo "  Initializing Terraform..."
         terraform init -input=false >/dev/null 2>&1
     fi
 
     # Get list of workspaces
-    mapfile -t workspaces < <(terraform workspace list 2>/dev/null | sed 's/^[* ]*//')
+    mapfile -t workspaces < <(terraform workspace list 2>/dev/null | sed 's/^[* ]*//' | grep -v '^$')
 
     if [ ${#workspaces[@]} -eq 0 ]; then
         echo "  No workspaces found. Skipping."
@@ -32,12 +31,10 @@ for dir in "${tfvars_dirs[@]}"; do
         continue
     fi
 
-    # Loop through each workspace
     for ws in "${workspaces[@]}"; do
         echo "  Workspace: $ws"
         terraform workspace select "$ws" >/dev/null 2>&1
 
-        # Attempt to show state
         output=$(terraform show -json 2>/dev/null)
         if [[ $? -eq 0 && "$output" == *'"values"'* ]]; then
             with_state+=("$dir | workspace: $ws")
@@ -48,7 +45,6 @@ for dir in "${tfvars_dirs[@]}"; do
 
     popd >/dev/null
     ((index++))
-
 done
 
 # Print results
