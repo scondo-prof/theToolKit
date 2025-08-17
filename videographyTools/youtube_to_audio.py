@@ -17,7 +17,7 @@ if __name__ == "__main__":
     yt: YouTube = YouTube(url, on_progress_callback=on_progress)
     print(f"Going to Download: {yt.title}")
 
-    ys = yt.streams.get_audio_only()
+    ys: YouTube.Stream = yt.streams.get_audio_only()
 
     if os.getenv("OUTPUT_PATH"):
         output_path: str = os.getenv("OUTPUT_PATH")
