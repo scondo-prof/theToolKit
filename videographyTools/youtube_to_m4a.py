@@ -1,4 +1,6 @@
 import os
+import re
+import subprocess
 
 from dotenv import load_dotenv
 from pytubefix import YouTube
@@ -23,8 +25,11 @@ if __name__ == "__main__":
 
     print(f"Output Location: {output_path}")
 
-    output_file: str = ys.download(
-        output_path=output_path,
-    )
+    file_name: str = yt.title
+    file_name = file_name.lower()
+    file_name = file_name.replace(" ", "_")
+    file_name = re.sub(r"[^a-z0-9_]", "", file_name)
+
+    output_file: str = ys.download(output_path=output_path, filename=f"{file_name}.m4a")
 
     print(f"Downloaded Video: {yt.title} | To location: {output_file}")
