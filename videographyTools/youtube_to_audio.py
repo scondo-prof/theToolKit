@@ -12,7 +12,7 @@ load_dotenv()
 
 if __name__ == "__main__":
 
-    url: str = input("Enter Desired Video Url: ")
+    url: str = os.getenv("VIDEO_URL")
 
     yt: YouTube = YouTube(url, on_progress_callback=on_progress)
     print(f"Going to Download: {yt.title}")
