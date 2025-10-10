@@ -1,6 +1,9 @@
 import os
 
 import discord
+from dotenv import load_dotenv
+
+load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -23,4 +26,4 @@ async def on_message(message: str) -> int:
         return 1
 
 
-client.run(os.getenv("DISCORD_BOT_TOKEN"))
+client.run(token=os.getenv("DISCORD_BOT_TOKEN"))
