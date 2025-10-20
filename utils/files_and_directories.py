@@ -40,9 +40,9 @@ def filename_prefix_append(method: str, prefix: str, filename: str = None):
     elif method == "recursive":
         file_list: list[str] = list_files_recursively(dir_path=".")
         for file_name in file_list:
-            file_name_list = file_name.split("\\")
+            file_name_list: list[str] = file_name.split("\\")
             file_name_list[-1] = f"{prefix}{file_name_list[-1]}"
-            new_file_name = "\\".join(file_name_list)
+            new_file_name: str = "\\".join(file_name_list)
             os.rename(src=file_name, dst=new_file_name)
             print(f"{file_name} -> {new_file_name}")
     else:
@@ -50,23 +50,33 @@ def filename_prefix_append(method: str, prefix: str, filename: str = None):
 
 
 def main():
-    # parser = argparse.ArgumentParser(description="Utility for working with files and directories.")
-    # subparsers = parser.add_subparsers(dest="command", required=True)
+    parser = argparse.ArgumentParser(description="Utility for working with files and directories.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # # list_files_recursively command
-    # parser_list = subparsers.add_parser("list_files_recursively", help="Recursively list all files in a directory.")
-    # parser_list.add_argument("dir_path", help="Path to the target directory.")
-    # parser_list.set_defaults(func=list_files_recursively)
+    # list_files_recursively command
+    parser_list = subparsers.add_parser(
+        "list_files_recursively", help="Recursively list all files in a directory, showing relative paths."
+    )
+    parser_list.add_argument("dir_path", help="Path to the target directory.")
+    parser_list.set_defaults(func=list_files_recursively)
 
-    # # move_file command
-    # parser_move = subparsers.add_parser("move_file", help="Move a file from source to destination.")
-    # parser_move.add_argument("source_path", help="Path to the file to move.")
-    # parser_move.add_argument("destination_path", help="Path to the destination directory.")
-    # parser_move.set_defaults(func=move_file)
+    # move_file command
+    parser_move = subparsers.add_parser("move_file", help="Move a file from source to destination.")
+    parser_move.add_argument("source_path", help="Path to the file to move.")
+    parser_move.add_argument("destination_path", help="Path to the destination directory.")
+    parser_move.set_defaults(func=move_file)
 
-    # args = parser.parse_args()
-    # args.func(**vars(args))  # Calls the selected function
-    filename_prefix_append(method="recursive", prefix="2025-10-19_")
+    # filename_prefix_append command
+    parser_move = subparsers.add_parser("filename_prefix_append", help="Appends a Prefix to designated file/files.")
+    parser_move.add_argument("method", help="Method to apply a prefix. Valid Options: file | cwd | recursive")
+    parser_move.add_argument("prefix", help="Prefix to append to file/files.")
+    parser_move.add_argument(
+        "filename", help="Target filename to add a prefix to. This argument is only required when method=file"
+    )
+    parser_move.set_defaults(func=filename_prefix_append)
+
+    args = parser.parse_args()
+    args.func(**vars(args))  # Calls the selected function
 
 
 if __name__ == "__main__":
