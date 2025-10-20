@@ -27,12 +27,9 @@ def move_file(source_path: str, destination_path: str):
         print(f"Failed to move file from {source_path} to {destination_path}: {e}")
 
 
-def filename_prefix_append(method: str, prefix: str, filename: str = None):
+def filename_prefix_append(method: str, prefix: str):
     """Appends a Prefix to designated file/files."""
-    if method == "file":
-        os.rename(src=filename, dst=f"{prefix}{filename}")
-        print(f"{filename} -> {prefix}{filename}")
-    elif method == "cwd":
+    if method == "cwd":
         for file_name in os.listdir():
             if os.path.isfile(file_name):
                 os.rename(src=file_name, dst=f"{prefix}{file_name}")
@@ -68,15 +65,17 @@ def main():
 
     # filename_prefix_append command
     parser_move = subparsers.add_parser("filename_prefix_append", help="Appends a Prefix to designated file/files.")
-    parser_move.add_argument("method", help="Method to apply a prefix. Valid Options: file | cwd | recursive")
-    parser_move.add_argument("prefix", help="Prefix to append to file/files.")
     parser_move.add_argument(
-        "filename", help="Target filename to add a prefix to. This argument is only required when method=file"
+        "method",
+        choices=["cwd", "recursive"],
+        help="How to apply the prefix",
     )
+    parser_move.add_argument("prefix", help="Prefix to append to file/files.")
     parser_move.set_defaults(func=filename_prefix_append)
 
     args = parser.parse_args()
-    args.func(**vars(args))  # Calls the selected function
+    kwargs = {k: v for k, v in vars(args).items() if k not in ("func", "command")}
+    args.func(**kwargs)
 
 
 if __name__ == "__main__":
