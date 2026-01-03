@@ -1,0 +1,44 @@
+name: GitHub Issues Integration
+description: "Send GitHub issues to Discord"
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - closed
+      - reopened
+
+jobs:
+  log_issue_details:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Echo key issue fields (quick)
+        run: |
+          echo "Action:        ${{ github.event.action }}"
+          echo "Repo:          ${{ github.repository }}"
+          echo "Issue number:  #${{ github.event.issue.number }}"
+          echo "Issue title:   ${{ github.event.issue.title }}"
+          echo "Issue state:   ${{ github.event.issue.state }}"
+          echo "Issue URL:     ${{ github.event.issue.html_url }}"
+          echo "Author login:  ${{ github.event.issue.user.login }}"
+          echo "Created at:    ${{ github.event.issue.created_at }}"
+          echo "Updated at:    ${{ github.event.issue.updated_at }}"
+          echo "Is locked:     ${{ github.event.issue.locked }}"
+          echo "Comments:      ${{ github.event.issue.comments }}"
+
+      - name: Echo labels and assignees (via event JSON)
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+        run: |
+          echo "Event payload path: $EVENT_PATH"
+          echo ""
+          echo "Labels:"
+          jq -r '.issue.labels[]?.name' "$EVENT_PATH" | sed 's/^/  • /' || true
+          echo ""
+          echo "Assignees:"
+          jq -r '.issue.assignees[]?.login' "$EVENT_PATH" | sed 's/^/  • /' || true
+          echo ""
+          echo "Milestone:"
+          jq -r '.issue.milestone?.title // ""' "$EVENT_PATH"
