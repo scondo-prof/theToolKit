@@ -2,3 +2,5 @@
 .venv
 *pycache*
 .vscode
+
+z.*
