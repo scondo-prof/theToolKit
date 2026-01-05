@@ -1,18 +1,42 @@
-# GitHub Issues Integration Action
+# GitHub Issues Integration Workflow
 
 ## Overview
 
-This is a GitHub Actions composite action that logs detailed information about GitHub issue events. It extracts and displays issue metadata including basic fields, labels, assignees, milestone, and the full issue body. This action is designed to be used within a workflow that monitors issue events.
+This is a GitHub Actions workflow that monitors issue events in your repository and logs detailed information about them. The workflow is triggered when issues are opened, closed, reopened, edited, deleted, assigned/unassigned, labeled/unlabeled, milestoned/demilestoned, or when issue comments are created, edited, or deleted. It extracts and displays issue metadata including basic fields, labels, assignees, milestone, and the full issue body.
 
 ## File Structure
 
-- `action.yml` - The GitHub Actions composite action definition
+- `action.yml` - The GitHub Actions workflow definition (note: this file should be placed in `.github/workflows/` directory in your repository)
 
-## Action Details
+## Workflow Details
+
+### Triggers
+
+The workflow is triggered by the following issue event types:
+
+**Issue Events:**
+
+- `opened` - When a new issue is created
+- `closed` - When an issue is closed
+- `reopened` - When a closed issue is reopened
+- `edited` - When an existing issue is modified
+- `deleted` - When an issue is deleted
+- `assigned` - When an issue is assigned to someone
+- `unassigned` - When an assignee is removed from an issue
+- `labeled` - When a label is added to an issue
+- `unlabeled` - When a label is removed from an issue
+- `milestoned` - When an issue is added to a milestone
+- `demilestoned` - When an issue is removed from a milestone
+
+**Issue Comment Events:**
+
+- `created` - When a comment is created on an issue
+- `edited` - When an issue comment is edited
+- `deleted` - When an issue comment is deleted
 
 ### What It Does
 
-This composite action performs two main steps:
+This workflow runs on `ubuntu-latest` and performs two main steps:
 
 #### Step 1: Echo Key Issue Fields
 
@@ -45,45 +69,43 @@ This step uses `jq` to parse the event payload JSON file located at `${{ github.
 
 ### Installation
 
-This is a composite action that should be used within a GitHub Actions workflow. To use it:
+1. Copy the `action.yml` file to your repository's `.github/workflows/` directory
+2. Rename it to something descriptive like `github-issues-discord.yml` (or any `.yml` or `.yaml` extension)
+3. Commit and push the file to your repository
+4. The workflow will automatically trigger on the configured issue events
 
-1. Reference this action in your workflow file (`.github/workflows/*.yml`)
-2. Set up the workflow to trigger on issue events
+### Alternative: Use as Reusable Workflow
 
-### Example Workflow
-
-Create a workflow file (e.g., `.github/workflows/github-issues-discord.yml`) with the following content:
+If you want to use this workflow from another repository, you can convert it to a reusable workflow by adding `workflow_call` to the `on:` clause:
 
 ```yaml
-name: GitHub Issues to Discord
-
 on:
+  workflow_call: # Allows it to be called from other repos
   issues:
-    types:
-      - opened
-      - edited
-      - closed
-      - reopened
-
-jobs:
-  log_issue_details:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Use GitHub Issues Integration Action
-        uses: ./remote_github_actions/discord/github_issues_integration
+    types: [...]
+  issue_comment:
+    types: [...]
 ```
 
-**Note**: The path `./remote_github_actions/discord/github_issues_integration` assumes the action is in your repository at that location. Adjust the path accordingly, or reference it via a repository path if it's in a separate repo.
+Then reference it from another repository's workflow:
+
+```yaml
+jobs:
+  call-remote-workflow:
+    uses: owner/repo/.github/workflows/github-issues-discord.yml@main
+```
+
+**Note**: The current `action.yml` file is a standalone workflow that will trigger automatically when placed in `.github/workflows/` directory.
 
 ### Prerequisites
 
 - A GitHub repository with Actions enabled
-- No additional secrets or permissions required (this action only reads public issue data)
+- No additional secrets or permissions required (this workflow only reads public issue data)
 - The `jq` command (pre-installed on GitHub-hosted runners)
 
 ## Event Payload
 
-The action uses `${{ github.event_path }}` which contains the full event payload as JSON. This allows access to all issue data including:
+The workflow uses `${{ github.event_path }}` which contains the full event payload as JSON. This allows access to all issue data including:
 
 - Issue body (full markdown content)
 - Labels (array of objects with `name`, `color`, etc.)
@@ -128,7 +150,7 @@ Milestone:
 
 ## Future Enhancements
 
-This action currently only logs issue information. Future enhancements could include:
+This workflow currently only logs issue information. Future enhancements could include:
 
 - Sending notifications to Discord webhooks
 - Sending notifications to Slack
@@ -138,13 +160,13 @@ This action currently only logs issue information. Future enhancements could inc
 
 ## Troubleshooting
 
-### Action Not Running
+### Workflow Not Triggering
 
-- Ensure the action is being called from within a workflow file
-- Check that the workflow file is in `.github/workflows/` directory
+- Ensure the workflow file is in `.github/workflows/` directory
+- Check that the file has a `.yml` or `.yaml` extension
 - Verify the repository has GitHub Actions enabled
-- Make sure your workflow is configured to trigger on issue events
-- Verify the path to the action is correct (if using a local action)
+- Make sure you're triggering one of the supported event types
+- Check the Actions tab in GitHub to see if there are any error messages
 
 ### jq Command Fails
 
@@ -155,7 +177,7 @@ The `jq` command is pre-installed on GitHub-hosted runners. If you see errors:
 
 ## Related Documentation
 
-- [GitHub Actions Composite Actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action)
 - [GitHub Actions Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 - [GitHub Events Documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues)
 - [GitHub Contexts and Expression Syntax](https://docs.github.com/en/actions/learn-github-actions/contexts)
+- [Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
