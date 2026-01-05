@@ -11,6 +11,11 @@ jobs:
         run: |
           echo "Issue Title:   ${{ github.event.issue.title }}
           echo "Issue State:   ${{ github.event.issue.state }}
+          echo "Issue URL:     ${{ github.event.issue.html_url }}
+          echo ""
+          echo "--------------------------------"
+          echo ""
+          echo "Issue Body:    ${{ github.event.issue.body }}
 
       - name: Echo labels and assignees (via event JSON)
         env:
