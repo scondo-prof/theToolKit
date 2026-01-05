@@ -1,0 +1,36 @@
+name: GitHub Issues Integration
+
+on:
+  workflow_call:
+
+jobs:
+  log_issue_details:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo key issue fields (quick)
+        run: |
+          echo "Trigger Action: ${{ github.event_name }} ${{ github.event.action }}"
+          echo "Issue Title:    ${{ github.event.issue.title }}"
+          echo "User:           ${{ github.event.issue.user.login }}"
+          echo "Issue Number:   ${{ github.event.issue.number }}"
+          echo "Issue State:    ${{ github.event.issue.state }}"
+          echo "Issue URL:      ${{ github.event.issue.html_url }}"
+          echo "Repository:     ${{ github.repository }}"
+          echo ""
+          echo "Trigger Reason: The workflow was triggered by an | ${{ github.event_name }} | event with action | ${{ github.event.action }} |"
+
+      - name: Send to Discord
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: |
+            ---
+            # Issue Title: ${{ github.event.issue.title }}
+
+            ## Issue Details:
+            - **User:** ${{ github.event.issue.user.login }}
+            - **Trigger Action:** ${{ github.event_name }} ${{ github.event.action }}
+            - **Repository:** ${{ github.repository }}
+            - **Issue Number:** ${{ github.event.issue.number }}
+            - **Issue State:** ${{ github.event.issue.state }}
+            - **Issue URL:** ${{ github.event.issue.html_url }}
