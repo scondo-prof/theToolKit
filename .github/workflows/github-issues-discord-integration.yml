@@ -15,7 +15,7 @@ jobs:
           echo ""
           echo "--------------------------------"
           echo ""
-          echo "Issue Body:    ${{ github.event.issue.body }}
+          echo "Total Issue Details: ${{ github.event.issue | toJson }}"
 
       - name: Echo labels and assignees (via event JSON)
         env:
@@ -31,10 +31,3 @@ jobs:
           echo ""
           echo "Milestone:"
           jq -r '.issue.milestone?.title // ""' "$EVENT_PATH"
-
-          echo "--------------------------------"
-          echo ""
-          echo "Total Event:    cat $EVENT_PATH
-          echo ""
-          echo "--------------------------------"
-          echo ""
