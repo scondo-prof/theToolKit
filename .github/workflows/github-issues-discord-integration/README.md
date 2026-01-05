@@ -2,17 +2,21 @@
 
 ## Overview
 
-This is a GitHub Actions workflow that monitors issue events in your repository and logs detailed information about them. The workflow is triggered when issues are opened, closed, reopened, edited, deleted, assigned/unassigned, labeled/unlabeled, milestoned/demilestoned, or when issue comments are created, edited, or deleted. It extracts and displays issue metadata including basic fields, labels, assignees, milestone, and the full issue body.
+This is a **reusable** GitHub Actions workflow that logs detailed information about GitHub issue events. It extracts and displays issue metadata including basic fields, labels, assignees, milestone, and the full issue body. This workflow is designed to be called from other repositories, where each repository defines its own trigger events.
 
 ## File Structure
 
-- `action.yml` - The GitHub Actions workflow definition (note: this file should be placed in `.github/workflows/` directory in your repository)
+- `action.yml` - The GitHub Actions reusable workflow definition (must be in `.github/workflows/` directory to be callable)
 
 ## Workflow Details
 
-### Triggers
+### How It Works
 
-The workflow is triggered by the following issue event types:
+This is a **reusable workflow** that uses `workflow_call` as its trigger. The calling repository defines which issue events trigger the workflow. This allows each repository to customize which issue events they want to monitor.
+
+### Supported Event Types
+
+The calling repository can trigger this workflow for any of the following issue event types:
 
 **Issue Events:**
 
@@ -36,7 +40,7 @@ The workflow is triggered by the following issue event types:
 
 ### What It Does
 
-This workflow runs on `ubuntu-latest` and performs two main steps:
+When called from another repository, this reusable workflow runs on `ubuntu-latest` and performs two main steps:
 
 #### Step 1: Echo Key Issue Fields
 
@@ -67,35 +71,103 @@ This step uses `jq` to parse the event payload JSON file located at `${{ github.
 
 ## Usage
 
-### Installation
+### As a Reusable Workflow (Recommended)
 
-1. Copy the `action.yml` file to your repository's `.github/workflows/` directory
-2. Rename it to something descriptive like `github-issues-discord.yml` (or any `.yml` or `.yaml` extension)
-3. Commit and push the file to your repository
-4. The workflow will automatically trigger on the configured issue events
+This workflow is designed to be called from other repositories. The calling repository defines which issue events trigger it.
 
-### Alternative: Use as Reusable Workflow
+#### Step 1: Place the Workflow in the Source Repository
 
-If you want to use this workflow from another repository, you can convert it to a reusable workflow by adding `workflow_call` to the `on:` clause:
+**Important**: Reusable workflows MUST be located in the `.github/workflows/` directory to be callable.
+
+1. The workflow file is located at `.github/workflows/github-issues-discord-integration/workflow.yml`
+   - Note: GitHub Actions supports subdirectories within `.github/workflows/` for better organization
+2. The workflow uses `workflow_call`, which makes it callable from other repositories
+3. The file is already in the correct location and ready to use
+
+#### Step 2: Call from Another Repository
+
+In your calling repository, create a workflow file (e.g., `.github/workflows/github-issues-discord.yml`) with the following content:
+
+```yaml
+name: GitHub Issues to Discord
+
+on:
+  issues:
+    types:
+      - opened
+      - closed
+      - reopened
+      - edited
+      - deleted
+      - assigned
+      - unassigned
+      - labeled
+      - unlabeled
+      - milestoned
+      - demilestoned
+  issue_comment:
+    types:
+      - created
+      - edited
+      - deleted
+
+jobs:
+  log_issue_details:
+    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    # If the workflow is in a different repo, specify the full path:
+    # uses: your-org/tools/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    # Or if using the relative path within the same repo:
+    # uses: ./.github/workflows/github-issues-discord-integration/workflow.yml
+```
+
+**Important Path Notes**:
+
+- The `uses:` path must reference `.github/workflows/` directory - this is where reusable workflows must be located
+- The workflow is organized in a subdirectory: `github-issues-discord-integration/workflow.yml`
+- Subdirectories are supported and help organize multiple workflows
+- Replace `owner/repo` with the actual repository path (e.g., `your-org/tools`)
+- You can specify a branch (e.g., `@main`), tag (e.g., `@v1.0.0`), or commit SHA (e.g., `@abc123def`)
+
+### Example: Calling from Different Repositories
+
+Each repository can customize which events trigger the workflow:
+
+**Repository A** - Only wants to log new and closed issues:
 
 ```yaml
 on:
-  workflow_call: # Allows it to be called from other repos
   issues:
-    types: [...]
-  issue_comment:
-    types: [...]
+    types: [opened, closed]
+jobs:
+  log_issue_details:
+    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
 ```
 
-Then reference it from another repository's workflow:
+**Repository B** - Wants to monitor all issue changes:
 
 ```yaml
+on:
+  issues:
+    types:
+      [
+        opened,
+        closed,
+        reopened,
+        edited,
+        deleted,
+        assigned,
+        unassigned,
+        labeled,
+        unlabeled,
+        milestoned,
+        demilestoned,
+      ]
+  issue_comment:
+    types: [created, edited, deleted]
 jobs:
-  call-remote-workflow:
-    uses: owner/repo/.github/workflows/github-issues-discord.yml@main
+  log_issue_details:
+    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
 ```
-
-**Note**: The current `action.yml` file is a standalone workflow that will trigger automatically when placed in `.github/workflows/` directory.
 
 ### Prerequisites
 
@@ -162,11 +234,20 @@ This workflow currently only logs issue information. Future enhancements could i
 
 ### Workflow Not Triggering
 
+**For the source repository (where action.yml lives):**
+
 - Ensure the workflow file is in `.github/workflows/` directory
 - Check that the file has a `.yml` or `.yaml` extension
 - Verify the repository has GitHub Actions enabled
-- Make sure you're triggering one of the supported event types
+
+**For the calling repository:**
+
+- Ensure the calling workflow file is in `.github/workflows/` directory
+- Verify the `uses:` path is correct (check repository, path, and branch/tag)
+- Make sure you've defined the `on:` clause with the issue events you want to trigger on
+- Verify the repository has GitHub Actions enabled and has permission to call reusable workflows
 - Check the Actions tab in GitHub to see if there are any error messages
+- If calling from a different organization, ensure the workflow is public or the organizations have proper permissions
 
 ### jq Command Fails
 

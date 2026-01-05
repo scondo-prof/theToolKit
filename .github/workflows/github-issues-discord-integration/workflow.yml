@@ -1,24 +1,14 @@
 name: GitHub Issues Integration
 
 on:
-  issues:
-    types:
-      - opened
-      - closed
-      - reopened
-      - edited
-      - deleted
-      - assigned
-      - unassigned
-      - labeled
-      - unlabeled
-      - milestoned
-      - demilestoned
-  issue_comment:
-    types:
-      - created
-      - edited
-      - deleted
+  workflow_call:
+
+# inputs:
+#   # Optional: Add inputs if needed for customization
+#   # webhook_url:
+#   #   description: "Discord webhook URL"
+#   #   required: false
+#   #   type: string
 
 jobs:
   log_issue_details:
@@ -59,3 +49,4 @@ jobs:
           echo ""
           echo "Milestone:"
           jq -r '.issue.milestone?.title // ""' "$EVENT_PATH"
+
