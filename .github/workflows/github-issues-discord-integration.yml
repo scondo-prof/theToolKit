@@ -19,7 +19,7 @@ jobs:
           echo "Trigger Reason: The workflow was triggered by an issue event with action '${{ github.event.action }}'"
           echo "Possible actions: opened, closed, reopened, edited, deleted, assigned, unassigned, labeled, unlabeled, milestoned, demilestoned"
       - name: Send to Discord
-        uses: discord/discord-webhook-action@v1
+        uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           content: |
@@ -27,7 +27,6 @@ jobs:
             # Issue Title: ${{ github.event.issue.title }}
 
             ## Issue Details:
-
             - **Trigger Action:** ${{ github.event.action }}
             - **Repository:** ${{ github.repository }}
             - **Issue Number:** #${{ github.event.issue.number }}
