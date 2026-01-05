@@ -11,8 +11,8 @@ jobs:
         run: |
           echo "Trigger Action: ${{ github.event.action }}"
           echo "Issue Title:    ${{ github.event.issue.title }}"
-          echo "User:           ${{ env.GITHUB_ACTOR }}"
-          echo "Issue Number:   #${{ github.event.issue.number }}"
+          echo "User:           ${{ github.event.issue.user.login }}"
+          echo "Issue Number:   ${{ github.event.issue.number }}"
           echo "Issue State:    ${{ github.event.issue.state }}"
           echo "Issue URL:      ${{ github.event.issue.html_url }}"
           echo "Repository:     ${{ github.repository }}"
@@ -28,9 +28,9 @@ jobs:
             # Issue Title: ${{ github.event.issue.title }}
 
             ## Issue Details:
-            - **User:**           ${{ env.GITHUB_ACTOR }}
+            - **User:** ${{ github.event.issue.user.login }}
             - **Trigger Action:** ${{ github.event.action }}
-            - **Repository:**     ${{ github.repository }}
-            - **Issue Number:**   ${{ github.event.issue.number }}
-            - **Issue State:**    ${{ github.event.issue.state }}
-            - **Issue URL:**      ${{ github.event.issue.html_url }}
+            - **Repository:** ${{ github.repository }}
+            - **Issue Number:** ${{ github.event.issue.number }}
+            - **Issue State:** ${{ github.event.issue.state }}
+            - **Issue URL:** ${{ github.event.issue.html_url }}
