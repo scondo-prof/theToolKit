@@ -6,7 +6,7 @@ This is a **reusable** GitHub Actions workflow that logs detailed information ab
 
 ## File Structure
 
-- `action.yml` - The GitHub Actions reusable workflow definition (must be in `.github/workflows/` directory to be callable)
+- `github-issues-discord-integration.yml` - The GitHub Actions reusable workflow definition (must be directly in `.github/workflows/` directory to be callable - subdirectories are not supported)
 
 ## Workflow Details
 
@@ -77,10 +77,10 @@ This workflow is designed to be called from other repositories. The calling repo
 
 #### Step 1: Place the Workflow in the Source Repository
 
-**Important**: Reusable workflows MUST be located in the `.github/workflows/` directory to be callable.
+**Important**: Reusable workflows MUST be located directly in the `.github/workflows/` directory to be callable. GitHub Actions does not support workflows in subdirectories - they must be at the root level of `.github/workflows/`.
 
-1. The workflow file is located at `.github/workflows/github-issues-discord-integration/workflow.yml`
-   - Note: GitHub Actions supports subdirectories within `.github/workflows/` for better organization
+1. The workflow file is located at `.github/workflows/github-issues-discord-integration.yml`
+   - Note: The workflow file must exist directly in `.github/workflows/` (not in a subdirectory)
 2. The workflow uses `workflow_call`, which makes it callable from other repositories
 3. The file is already in the correct location and ready to use
 
@@ -113,18 +113,18 @@ on:
 
 jobs:
   log_issue_details:
-    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    uses: owner/repo/.github/workflows/github-issues-discord-integration.yml@main
     # If the workflow is in a different repo, specify the full path:
-    # uses: your-org/tools/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    # uses: your-org/tools/.github/workflows/github-issues-discord-integration.yml@main
     # Or if using the relative path within the same repo:
-    # uses: ./.github/workflows/github-issues-discord-integration/workflow.yml
+    # uses: ./.github/workflows/github-issues-discord-integration.yml
 ```
 
 **Important Path Notes**:
 
 - The `uses:` path must reference `.github/workflows/` directory - this is where reusable workflows must be located
-- The workflow is organized in a subdirectory: `github-issues-discord-integration/workflow.yml`
-- Subdirectories are supported and help organize multiple workflows
+- Workflows must exist directly in `.github/workflows/` (not in subdirectories) - this is a GitHub Actions requirement
+- The workflow file is named: `github-issues-discord-integration.yml`
 - Replace `owner/repo` with the actual repository path (e.g., `your-org/tools`)
 - You can specify a branch (e.g., `@main`), tag (e.g., `@v1.0.0`), or commit SHA (e.g., `@abc123def`)
 
@@ -140,7 +140,7 @@ on:
     types: [opened, closed]
 jobs:
   log_issue_details:
-    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    uses: owner/repo/.github/workflows/github-issues-discord-integration.yml@main
 ```
 
 **Repository B** - Wants to monitor all issue changes:
@@ -166,7 +166,7 @@ on:
     types: [created, edited, deleted]
 jobs:
   log_issue_details:
-    uses: owner/repo/.github/workflows/github-issues-discord-integration/workflow.yml@main
+    uses: owner/repo/.github/workflows/github-issues-discord-integration.yml@main
 ```
 
 ### Prerequisites
