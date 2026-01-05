@@ -9,9 +9,6 @@ jobs:
     steps:
       - name: Echo key issue fields (quick)
         run: |
-          echo "Action:        ${{ github_action }}"
-          echo "Repo:          ${{ github_repo }}"
-          echo "Issue number:  ${{ github_issue_number }}"
           echo "Issue Title:   ${{ github.event.issue.title }}
           echo "Issue State:   ${{ github.event.issue.state }}
 
