@@ -15,7 +15,7 @@ jobs:
           echo ""
           echo "--------------------------------"
           echo ""
-          echo "Total Issue Details: ${{ github.event.issue | toJson }}"
+          echo "Total Issue Details: ${{ github.event.issue }}"
 
       - name: Echo labels and assignees (via event JSON)
         env:
