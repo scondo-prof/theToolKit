@@ -3,37 +3,17 @@ name: GitHub Issues Integration
 on:
   workflow_call:
 
-# inputs:
-#   # Optional: Add inputs if needed for customization
-#   # webhook_url:
-#   #   description: "Discord webhook URL"
-#   #   required: false
-#   #   type: string
-
 jobs:
   log_issue_details:
     runs-on: ubuntu-latest
     steps:
       - name: Echo key issue fields (quick)
         run: |
-          echo "Action:        ${{ github.event.action }}"
-          echo "Repo:          ${{ github.repository }}"
-          echo "Issue number:  #${{ github.event.issue.number }}"
-          echo "Issue title:   ${{ github.event.issue.title }}"
-          echo "Issue state:   ${{ github.event.issue.state }}"
-          echo "Issue URL:     ${{ github.event.issue.html_url }}"
-          echo "Author login:  ${{ github.event.issue.user.login }}"
-          echo "Created at:    ${{ github.event.issue.created_at }}"
-          echo "Updated at:    ${{ github.event.issue.updated_at }}"
-          echo "Is locked:     ${{ github.event.issue.locked }}"
-          echo "Comments:      ${{ github.event.issue.comments }}"
-          echo ""
-          echo "--------------------------------"
-          echo ""
-          echo "Issue body:     ${{ github.event.issue.body }}"
-          echo ""
-          echo "--------------------------------"
-          echo ""
+          echo "Action:        ${{ github_action }}"
+          echo "Repo:          ${{ github_repo }}"
+          echo "Issue number:  ${{ github_issue_number }}"
+          echo "Issue Title:   ${{ github.event.issue.title }}
+          echo "Issue State:   ${{ github.event.issue.state }}
 
       - name: Echo labels and assignees (via event JSON)
         env:
@@ -49,4 +29,3 @@ jobs:
           echo ""
           echo "Milestone:"
           jq -r '.issue.milestone?.title // ""' "$EVENT_PATH"
-
