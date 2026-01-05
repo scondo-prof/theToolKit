@@ -31,3 +31,10 @@ jobs:
           echo ""
           echo "Milestone:"
           jq -r '.issue.milestone?.title // ""' "$EVENT_PATH"
+
+          echo "--------------------------------"
+          echo ""
+          echo "Total Event:    cat $EVENT_PATH
+          echo ""
+          echo "--------------------------------"
+          echo ""
