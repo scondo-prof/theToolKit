@@ -197,6 +197,24 @@ When calling a remote workflow, you have several options for the `uses:` path:
 - Check that the workflow file has the correct permissions set
 - Verify the branch/tag/commit SHA exists in the source repository
 
+## GitHub Context and Event Payload Documentation
+
+When working with GitHub Actions workflows, you'll often need to reference GitHub context values and event payload data:
+
+- **[GitHub Context (`github.*`)](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context)** - Context information about the workflow run, repository, actor, and more
+- **[Event Payload (`github.event.*`)](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context)** - Information about the event that triggered the workflow
+- **[Contexts Documentation](https://docs.github.com/en/actions/learn-github-actions/contexts)** - Complete reference for all available contexts (github, env, secrets, etc.)
+- **[Event Payloads Documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#webhook-events)** - Detailed payload structures for different event types
+
+### Common Context Values
+
+- `github.event_name` - The name of the webhook event that triggered the workflow (e.g., "issues", "pull_request")
+- `github.event.action` - The action that triggered the event (e.g., "opened", "closed", "edited")
+- `github.repository` - The owner and repository name (e.g., "owner/repo")
+- `github.actor` - The username of the user that triggered the workflow
+- `github.event.issue.*` - Issue-specific data from the event payload
+- `github.event.pull_request.*` - Pull request-specific data from the event payload
+
 ## Related Documentation
 
 - [GitHub Actions Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
