@@ -6,6 +6,8 @@ on:
 jobs:
   log_issue_details:
     runs-on: ubuntu-latest
+    env:
+      ISSUE_JSON: ${{ toJSON(github.event.issue) }}
     steps:
       - name: Echo key issue fields (quick)
         run: |
@@ -15,7 +17,7 @@ jobs:
           echo ""
           echo "--------------------------------"
           echo ""
-          echo "Total Issue Details: ${{ github.event.issue }}"
+          echo "Total Issue Details: ${{ ISSUE_JSON }}"
 
       - name: Echo labels and assignees (via event JSON)
         env:
