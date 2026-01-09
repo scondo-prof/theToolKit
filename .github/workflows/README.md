@@ -9,6 +9,7 @@ These workflows use `workflow_call` triggers, which allows them to be invoked fr
 ## Available Workflows
 
 - **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord
+- **github-issues-discord-periodic-updates.yml** - Periodically fetches and sends all repository issues to Discord
 
 ## How to Integrate a Remote Workflow
 
@@ -214,6 +215,34 @@ When working with GitHub Actions workflows, you'll often need to reference GitHu
 - `github.actor` - The username of the user that triggered the workflow
 - `github.event.issue.*` - Issue-specific data from the event payload
 - `github.event.pull_request.*` - Pull request-specific data from the event payload
+
+## Default Environment Variables (Built-in Variables)
+
+GitHub Actions automatically sets default environment variables that you can use in your workflows:
+
+- **[Default Environment Variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)** - Complete list of all default environment variables set by GitHub Actions
+
+### Common Default Environment Variables
+
+These variables are available as environment variables (e.g., `$GITHUB_WORKFLOW`) and can also be accessed via the GitHub context (e.g., `${{ github.workflow }}`):
+
+- `GITHUB_WORKFLOW` / `github.workflow` - The name of the workflow
+- `GITHUB_RUN_ID` / `github.run_id` - A unique number for each workflow run within a repository
+- `GITHUB_RUN_NUMBER` / `github.run_number` - A unique number for each run of a particular workflow in a repository
+- `GITHUB_REPOSITORY` / `github.repository` - The owner and repository name (e.g., "owner/repo")
+- `GITHUB_REPOSITORY_OWNER` / `github.repository_owner` - The repository owner's name
+- `GITHUB_REPOSITORY_URL` - The full URL to the repository (e.g., "https://github.com/owner/repo")
+- `GITHUB_REF` / `github.ref` - The branch or tag ref that triggered the workflow
+- `GITHUB_SHA` / `github.sha` - The commit SHA that triggered the workflow
+- `GITHUB_ACTOR` / `github.actor` - The username of the user that initiated the workflow run
+- `GITHUB_SERVER_URL` / `github.server_url` - The URL of the GitHub server (e.g., "https://github.com")
+- `GITHUB_API_URL` / `github.api_url` - The URL of the GitHub REST API
+
+### Workflow Run URLs
+
+You can construct URLs to workflow runs using these variables:
+
+- Workflow run URL: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
 
 ## Related Documentation
 
