@@ -5,8 +5,14 @@ on:
 
 jobs:
     periodic-issues-updates:
-        runs-on: python-latest
+        runs-on: ubuntu:latest
         steps:
-            - name: Run Python Script
+            - name: Get all issues
               run: |
-                  echo "Starting Script to obtain all issues "
+                  echo "Getting all issues"
+                  curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > ISSUES_JSON.json
+
+            - name: Read ISSUES_JSON.json
+              run: |
+                  echo "Reading ISSUES_JSON.json"
+                  cat ISSUES_JSON.json

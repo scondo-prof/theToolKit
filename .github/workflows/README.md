@@ -28,6 +28,27 @@ To add secrets:
 3. Click **New repository secret**
 4. Add the secret name and value
 
+### Step 1.5: Configure GITHUB_TOKEN Permissions (If Needed)
+
+**Important**: The `GITHUB_TOKEN` secret is automatically provided by GitHub Actions, but it defaults to **read-only permissions**.
+
+If your workflow needs write permissions (e.g., to create issues, update files, etc.), you must modify the workflow permissions:
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Actions** → **General**
+3. Scroll down to **Workflow permissions**
+4. Select **Read and write permissions** (instead of the default **Read repository contents and packages permissions**)
+5. Optionally, you can also set permissions in the workflow file itself using the `permissions:` key:
+
+```yaml
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+```
+
+**Note**: For most workflows that only read repository data (like fetching issues), the default read-only permissions are sufficient. Only modify permissions if your workflow needs to write to the repository.
+
 ### Step 2: Create a Workflow File in Your Repository
 
 Create a new workflow file in your repository's `.github/workflows/` directory (e.g., `.github/workflows/use-remote-workflow.yml`).
@@ -220,7 +241,7 @@ When working with GitHub Actions workflows, you'll often need to reference GitHu
 
 GitHub Actions automatically sets default environment variables that you can use in your workflows:
 
-- **[Default Environment Variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)** - Complete list of all default environment variables set by GitHub Actions
+- **[Default Environment Variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)** - Complete list of all default environment variables set by GitHub Actions
 
 ### Common Default Environment Variables
 

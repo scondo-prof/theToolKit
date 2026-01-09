@@ -12,14 +12,13 @@ When called from another repository, this reusable workflow runs on `ubuntu-late
 
 Echoes key issue details to the workflow logs:
 
-- **Trigger Action**: The event type that triggered the workflow (e.g., opened, closed, edited)
+- **Trigger Action**: The event name and action that triggered the workflow (e.g., "issues opened", "issues closed")
 - **Issue Title**: The title of the issue
-- **Issue Number**: The issue number (with # prefix)
+- **Issue Number**: The issue number
 - **Issue State**: Current state (open/closed)
 - **Issue URL**: Direct link to the issue
 - **Repository**: The repository where the issue exists
-- **Trigger Reason**: Explanation of what triggered the workflow
-- **Possible Actions**: List of all supported trigger actions
+- **Trigger Reason**: Explanation of what triggered the workflow, including event name and action
 
 ### Step 2: Send to Discord
 
@@ -68,15 +67,14 @@ This workflow can be triggered by any issue-related events defined by the callin
 ### Workflow Logs:
 
 ```
-Trigger Action: opened
+Trigger Action: issues opened
 Issue Title:    Example Issue Title
-Issue Number:   #123
+Issue Number:   123
 Issue State:    open
 Issue URL:      https://github.com/owner/repo/issues/123
 Repository:     owner/repo
 
-Trigger Reason: The workflow was triggered by an issue event with action 'opened'
-Possible actions: opened, closed, reopened, edited, deleted, assigned, unassigned, labeled, unlabeled, milestoned, demilestoned
+Trigger Reason: The workflow was triggered by an | issues | event with action | opened |
 ```
 
 ### Discord Message:
