@@ -48,7 +48,21 @@ The Discord message is formatted with markdown for better readability in Discord
 
 This job is triggered when `trigger-periodic-issues-updates` input is set to `true`. It performs the following:
 
-#### Step 1: Get All Issues
+#### Step 1: Checkout Repository
+
+Checks out the repository to access the Python formatting script:
+
+- Uses `actions/checkout@v4` to check out the repository code
+- This step is necessary because reusable workflows need explicit checkout to access files from the repository
+
+#### Step 2: Set Up Python
+
+Configures the Python environment:
+
+- Uses `actions/setup-python@v5` to set up Python 3.11
+- Ensures the correct Python version is available for running the formatting script
+
+#### Step 3: Get All Issues
 
 Fetches all issues from the repository using the GitHub API:
 
@@ -57,11 +71,11 @@ Fetches all issues from the repository using the GitHub API:
 - Retrieves all issues for the repository
 - Saves the response as JSON to `issues.json`
 
-#### Step 2: Create Discord Notification
+#### Step 4: Create Discord Notification
 
 Formats the issues data into a Discord-friendly message:
 
-- Runs a Python script (`workflow_assets/periodic_issues_notification_format.py`)
+- Runs a Python script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`)
 - Reads the `issues.json` file and formats each issue with:
   - Issue number and title
   - Issue state (open/closed)
@@ -71,7 +85,7 @@ Formats the issues data into a Discord-friendly message:
 - Creates a formatted markdown message with date header
 - Sets the formatted message as a workflow output for the next step
 
-#### Step 3: Send to Discord
+#### Step 5: Send to Discord
 
 Sends the formatted message to Discord:
 
@@ -83,7 +97,7 @@ Sends the formatted message to Discord:
 
 - A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for both real-time issue events and periodic updates)
 - The workflow must be called from a repository that has GitHub Actions enabled
-- Python 3 is available on the runner (provided by default on `ubuntu-latest`)
+- The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) must exist in the repository where the workflow is called
 - `GITHUB_TOKEN` must have appropriate permissions to read repository issues
   - By default, `GITHUB_TOKEN` has read-only permissions
   - For this workflow, read-only permissions are sufficient for both jobs
@@ -260,10 +274,12 @@ Issue Last Update: 2024-01-15T12:00:00Z
 
 ### Periodic Updates
 
+- **Checkout**: Uses `actions/checkout@v4` to check out the repository (required to access Python script)
+- **Python Setup**: Uses `actions/setup-python@v5` to configure Python 3.11 environment
 - **API Endpoint**: `GET /repos/{owner}/{repo}/issues`
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
 - **Output**: Saves all issues as JSON to `issues.json` file
-- **Processing**: Uses Python script (`workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
+- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
 - **Runner**: Uses `ubuntu-latest` runner
 - **Conditional Execution**: Job only runs when `trigger-periodic-issues-updates` input is `true`
