@@ -53,10 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.trigger-periodic-issues-updates
     steps:
-      # - name: Checkout repo
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: ${{ github.repository }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
