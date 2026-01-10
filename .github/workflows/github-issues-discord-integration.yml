@@ -56,7 +56,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          repository: "${{ github.repository }}@5-gh-periodic-issue-updates"
+          repository: ${{ github.repository }}
+          branch: 5-gh-periodic-issue-updates
 
       - name: Check directory
         run: |
