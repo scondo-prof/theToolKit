@@ -66,6 +66,9 @@ jobs:
           cd .github
           echo "Current directory: $(pwd)"
           ls -la
+          cd workflows
+          echo "Current directory: $(pwd)"
+          ls -la
 
       # - name: Set up Python
       #   uses: actions/setup-python@v5
