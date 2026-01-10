@@ -20,6 +20,7 @@ jobs:
     if: inputs.trigger-log-issue-details
     steps:
       - name: Echo key issue fields (quick)
+        id: echo_key_issue_fields
         run: |
           echo "Trigger Action: ${{ github.event_name }} ${{ github.event.action }}"
           echo "Issue Title:    ${{ github.event.issue.title }}"
@@ -32,6 +33,7 @@ jobs:
           echo "Trigger Reason: The workflow was triggered by an | ${{ github.event_name }} | event with action | ${{ github.event.action }} |"
 
       - name: Send to Discord
+        id: send_to_discord
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -52,25 +54,23 @@ jobs:
     if: inputs.trigger-periodic-issues-updates
     steps:
       - name: Get all issues
+        id: get_all_issues
         run: |
           echo "Getting all issues"
-          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > ISSUES_JSON.json
+          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > issues.json
 
-      - name: Read ISSUES_JSON.json
+      - name: Create Discord Notification from issues.json
+        id: create_discord_notification
         run: |
-          echo "Reading ISSUES_JSON.json"
-          cat ISSUES_JSON.json
+          python3 workflow_assets/periodic_issues_notification_format.py
 
-  test_job:
-    runs-on: ubuntu-latest
-    if: ${{ !inputs.trigger-log-issue-details && !inputs.trigger-periodic-issues-updates }}
-    steps:
-      - name: Echo test
-        run: |
-          echo "Test job"
+      - name: Send to Discord
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: ${{ steps.create_discord_notification.outputs.discord_message }}
 
         #!! example of how to use outputs from one job in another job
-
 # jobs:
 #   example:
 #     runs-on: ubuntu-latest

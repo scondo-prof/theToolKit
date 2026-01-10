@@ -55,18 +55,35 @@ Fetches all issues from the repository using the GitHub API:
 - Uses `curl` to make a GET request to the GitHub API
 - Authenticates using `secrets.GITHUB_TOKEN`
 - Retrieves all issues for the repository
-- Saves the response as JSON to `ISSUES_JSON.json`
+- Saves the response as JSON to `issues.json`
 
-#### Step 2: Read and Process Issues
+#### Step 2: Create Discord Notification
 
-- Reads the `ISSUES_JSON.json` file
-- Displays the issue data in workflow logs
-- Can be extended to send formatted information to Discord
+Formats the issues data into a Discord-friendly message:
+
+- Runs a Python script (`workflow_assets/periodic_issues_notification_format.py`)
+- Reads the `issues.json` file and formats each issue with:
+  - Issue number and title
+  - Issue state (open/closed)
+  - Creator information with avatar image
+  - Creation and update timestamps
+  - Link to the issue on GitHub
+- Creates a formatted markdown message with date header
+- Sets the formatted message as a workflow output for the next step
+
+#### Step 3: Send to Discord
+
+Sends the formatted message to Discord:
+
+- Uses the `tsickert/discord-webhook@v7.0.0` action
+- Sends the formatted message created in the previous step
+- Message is formatted with markdown for better readability in Discord channels
 
 ## Prerequisites
 
-- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for real-time issue events)
+- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for both real-time issue events and periodic updates)
 - The workflow must be called from a repository that has GitHub Actions enabled
+- Python 3 is available on the runner (provided by default on `ubuntu-latest`)
 - `GITHUB_TOKEN` must have appropriate permissions to read repository issues
   - By default, `GITHUB_TOKEN` has read-only permissions
   - For this workflow, read-only permissions are sufficient for both jobs
@@ -211,21 +228,26 @@ Trigger Reason: The workflow was triggered by an | issues | event with action | 
 
 ### Periodic Updates
 
-#### Workflow Logs:
+#### Discord Message Example:
 
 ```
-Getting all issues
-Reading ISSUES_JSON.json
-[
-  {
-    "id": 123456789,
-    "number": 1,
-    "title": "Example Issue",
-    "state": "open",
-    ...
-  },
-  ...
-]
+---
+# Issues as of 2024-01-15
+---------------------------------------------------
+
+
+## Issue Title: 1 - Example Issue
+
+Issue State: open
+
+Created By: username
+
+![Avatar](https://avatars.githubusercontent.com/u/123?v=4)
+
+Issue Created At: 2024-01-15T10:30:00Z
+Issue Last Update: 2024-01-15T12:00:00Z
+
+[Issue Link](https://github.com/owner/repo/issues/1)
 ```
 
 ## Technical Details
@@ -240,7 +262,9 @@ Reading ISSUES_JSON.json
 
 - **API Endpoint**: `GET /repos/{owner}/{repo}/issues`
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
-- **Output**: Saves all issues as JSON to `ISSUES_JSON.json` file
+- **Output**: Saves all issues as JSON to `issues.json` file
+- **Processing**: Uses Python script (`workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
+- **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
 - **Runner**: Uses `ubuntu-latest` runner
 - **Conditional Execution**: Job only runs when `trigger-periodic-issues-updates` input is `true`
 
