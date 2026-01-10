@@ -44,7 +44,7 @@ jobs:
             - **Issue State:** ${{ github.event.issue.state }}
             - **Issue URL:** ${{ github.event.issue.html_url }}
 
-  periodic-issues-updates:
+  periodic_issues_updates:
     runs-on: ubuntu-latest
     if: inputs.trigger_periodic_issues_updates == 'true'
     steps:
