@@ -57,6 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository }}
+          path: .github/workflows/workflow_assets
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -72,7 +73,7 @@ jobs:
       - name: Create Discord Notification from issues.json
         id: create_discord_notification
         run: |
-          python3 .github/workflows/workflow_assets/periodic_issues_notification_format.py
+          python3 periodic_issues_notification_format.py
 
       - name: Send to Discord
         uses: tsickert/discord-webhook@v7.0.0
