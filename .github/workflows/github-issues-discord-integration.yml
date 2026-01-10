@@ -53,34 +53,40 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.trigger-periodic-issues-updates
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}
+      # - name: Checkout repo
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: ${{ github.repository }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Get all issues
-        id: get_all_issues
+      - name: Check directory
         run: |
-          echo "Getting all issues"
-          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > issues.json
+          echo "Current directory: $(pwd)"
+          ls -la
 
-      - name: Create Discord Notification from issues.json
-        id: create_discord_notification
-        run: |
-          python3 .github/workflows/workflow_assets/periodic_issues_notification_format.py
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: "3.11"
 
-      - name: Send to Discord
-        uses: tsickert/discord-webhook@v7.0.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          content: ${{ steps.create_discord_notification.outputs.discord_message }}
+      # - name: Get all issues
+      #   id: get_all_issues
+      #   run: |
+      #     echo "Getting all issues"
+      #     curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > issues.json
 
-        #!! example of how to use outputs from one job in another job
+      # - name: Create Discord Notification from issues.json
+      #   id: create_discord_notification
+      #   run: |
+      #     python3 .github/workflows/workflow_assets/periodic_issues_notification_format.py
+
+      # - name: Send to Discord
+      #   uses: tsickert/discord-webhook@v7.0.0
+      #   with:
+      #     webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      #     content: ${{ steps.create_discord_notification.outputs.discord_message }}
+
+      #!! example of how to use outputs from one job in another job
+
 # jobs:
 #   example:
 #     runs-on: ubuntu-latest
