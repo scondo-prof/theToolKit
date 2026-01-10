@@ -2,13 +2,22 @@
 
 ## Overview
 
-This reusable GitHub Actions workflow monitors GitHub issue events and sends formatted notifications to Discord. When triggered, it logs detailed issue information to the workflow logs and sends a formatted message to a Discord webhook.
+This reusable GitHub Actions workflow provides two modes of operation for monitoring GitHub issues and sending notifications to Discord:
+
+1. **Real-time Issue Events**: Monitors GitHub issue events and sends formatted notifications to Discord as they happen
+2. **Periodic Updates**: Periodically fetches all issues from a repository and processes them (can be extended to send periodic summaries to Discord)
+
+Both modes are controlled through workflow inputs, allowing you to selectively enable the functionality you need when calling this reusable workflow.
 
 ## What It Does
 
-When called from another repository, this reusable workflow runs on `ubuntu-latest` and performs two main steps:
+When called from another repository, this reusable workflow runs on `ubuntu-latest` and can perform one or both of the following jobs based on input parameters:
 
-### Step 1: Log Issue Information
+### Job 1: Log Issue Details (Real-time Events)
+
+This job is triggered when `trigger_log_issue_details` input is set to `'true'`. It performs two main steps:
+
+#### Step 1: Log Issue Information
 
 Echoes key issue details to the workflow logs:
 
@@ -18,13 +27,15 @@ Echoes key issue details to the workflow logs:
 - **Issue State**: Current state (open/closed)
 - **Issue URL**: Direct link to the issue
 - **Repository**: The repository where the issue exists
+- **User**: The GitHub username of the issue creator
 - **Trigger Reason**: Explanation of what triggered the workflow, including event name and action
 
-### Step 2: Send to Discord
+#### Step 2: Send to Discord
 
 Sends a formatted message to Discord using a webhook. The Discord message includes:
 
 - Issue title as a main header
+- User who created the issue
 - Trigger action
 - Repository name
 - Issue number
@@ -33,14 +44,45 @@ Sends a formatted message to Discord using a webhook. The Discord message includ
 
 The Discord message is formatted with markdown for better readability in Discord channels.
 
+### Job 2: Periodic Issues Updates
+
+This job is triggered when `trigger_periodic_issues_updates` input is set to `'true'`. It performs the following:
+
+#### Step 1: Get All Issues
+
+Fetches all issues from the repository using the GitHub API:
+
+- Uses `curl` to make a GET request to the GitHub API
+- Authenticates using `secrets.GITHUB_TOKEN`
+- Retrieves all issues for the repository
+- Saves the response as JSON to `ISSUES_JSON.json`
+
+#### Step 2: Read and Process Issues
+
+- Reads the `ISSUES_JSON.json` file
+- Displays the issue data in workflow logs
+- Can be extended to send formatted information to Discord
+
 ## Prerequisites
 
-- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL`
+- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for real-time issue events)
 - The workflow must be called from a repository that has GitHub Actions enabled
+- `GITHUB_TOKEN` must have appropriate permissions to read repository issues
+  - By default, `GITHUB_TOKEN` has read-only permissions
+  - For this workflow, read-only permissions are sufficient for both jobs
+
+## Workflow Inputs
+
+The workflow accepts the following optional inputs:
+
+| Input                             | Type   | Required | Default   | Description                                                                          |
+| --------------------------------- | ------ | -------- | --------- | ------------------------------------------------------------------------------------ |
+| `trigger_log_issue_details`       | string | false    | `"false"` | Set to `"true"` to enable real-time issue event monitoring and Discord notifications |
+| `trigger_periodic_issues_updates` | string | false    | `"false"` | Set to `"true"` to enable periodic fetching and processing of all issues             |
 
 ## Supported Event Types
 
-This workflow can be triggered by any issue-related events defined by the calling repository. Common trigger events include:
+For the **Log Issue Details** job, this workflow can be triggered by any issue-related events defined by the calling repository. Common trigger events include:
 
 **Issue Events:**
 
@@ -62,9 +104,83 @@ This workflow can be triggered by any issue-related events defined by the callin
 - `edited` - When an issue comment is edited
 - `deleted` - When an issue comment is deleted
 
+## Usage
+
+### Real-time Issue Events
+
+To use the workflow for real-time issue notifications, call it from a workflow that triggers on issue events:
+
+```yaml
+name: Issue Notifications
+
+on:
+  issues:
+    types: [opened, closed, reopened, edited]
+  issue_comment:
+    types: [created, edited, deleted]
+
+jobs:
+  notify_discord:
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
+    with:
+      trigger_log_issue_details: "true"
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+```
+
+### Periodic Updates
+
+To use the workflow for periodic issue updates, call it from a scheduled workflow:
+
+```yaml
+name: Daily Issues Update
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: "0 9 * * *"
+
+jobs:
+  periodic_update:
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
+    with:
+      trigger_periodic_issues_updates: "true"
+```
+
+### Using Both Modes
+
+You can also use both modes simultaneously by setting both inputs to `"true"`:
+
+```yaml
+name: Complete Issue Integration
+
+on:
+  issues:
+    types: [opened, closed, reopened, edited]
+  schedule:
+    - cron: "0 9 * * *"
+
+jobs:
+  real_time_updates:
+    if: github.event_name == 'issues' || github.event_name == 'issue_comment'
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
+    with:
+      trigger_log_issue_details: "true"
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+  periodic_update:
+    if: github.event_name == 'schedule'
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
+    with:
+      trigger_periodic_issues_updates: "true"
+```
+
 ## Example Output
 
-### Workflow Logs:
+### Real-time Issue Events
+
+#### Workflow Logs:
 
 ```
 Trigger Action: issues opened
@@ -77,7 +193,7 @@ Repository:     owner/repo
 Trigger Reason: The workflow was triggered by an | issues | event with action | opened |
 ```
 
-### Discord Message:
+#### Discord Message:
 
 ```
 ---
@@ -85,15 +201,54 @@ Trigger Reason: The workflow was triggered by an | issues | event with action | 
 
 ## Issue Details:
 
-- **Trigger Action:** opened
+- **User:** username
+- **Trigger Action:** issues opened
 - **Repository:** owner/repo
-- **Issue Number:** #123
+- **Issue Number:** 123
 - **Issue State:** open
 - **Issue URL:** https://github.com/owner/repo/issues/123
 ```
+
+### Periodic Updates
+
+#### Workflow Logs:
+
+```
+Getting all issues
+Reading ISSUES_JSON.json
+[
+  {
+    "id": 123456789,
+    "number": 1,
+    "title": "Example Issue",
+    "state": "open",
+    ...
+  },
+  ...
+]
+```
+
+## Technical Details
+
+### Real-time Issue Events
+
+- **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending messages
+- **Format**: Messages are formatted with markdown for Discord compatibility
+- **Conditional Execution**: Job only runs when `trigger_log_issue_details` input is `"true"`
+
+### Periodic Updates
+
+- **API Endpoint**: `GET /repos/{owner}/{repo}/issues`
+- **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
+- **Output**: Saves all issues as JSON to `ISSUES_JSON.json` file
+- **Runner**: Uses `ubuntu-latest` runner
+- **Conditional Execution**: Job only runs when `trigger_periodic_issues_updates` input is `"true"`
+
+The workflow requires read permissions on the repository, which is the default for `GITHUB_TOKEN`.
 
 ## Related Documentation
 
 - [GitHub Actions Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
 - [GitHub Events Documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues)
+- [Scheduled Events](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule)
 - [Discord Webhook Action](https://github.com/marketplace/actions/discord-webhook-action)
