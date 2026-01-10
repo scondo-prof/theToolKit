@@ -5,7 +5,7 @@ on:
 
 jobs:
     periodic-issues-updates:
-        runs-on: ubuntu:latest
+        runs-on: ubuntu-latest
         steps:
             - name: Get all issues
               run: |
