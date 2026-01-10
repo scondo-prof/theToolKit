@@ -7,6 +7,7 @@ on:
         required: false
         type: string
         default: "false"
+
       trigger_periodic_issues_updates:
         required: false
         type: string
@@ -57,3 +58,11 @@ jobs:
         run: |
           echo "Reading ISSUES_JSON.json"
           cat ISSUES_JSON.json
+
+  test_job:
+    runs-on: ubuntu-latest
+    if: inputs.trigger_log_issue_details == 'false' && inputs.trigger_periodic_issues_updates == 'false'
+    steps:
+      - name: Echo test
+        run: |
+          echo "Test job"
