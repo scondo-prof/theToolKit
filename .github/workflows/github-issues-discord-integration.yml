@@ -68,3 +68,20 @@ jobs:
       - name: Echo test
         run: |
           echo "Test job"
+
+        #!! example of how to use outputs from one job in another job
+
+# jobs:
+#   example:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Compute value
+#         id: compute
+#         run: |
+#           VALUE="cool-beans"
+#           echo "result=$VALUE" >> "$GITHUB_OUTPUT"
+
+#       - name: Use value
+#         run: |
+#           echo "Result is: ${{ steps.compute.outputs.result }}"
+
