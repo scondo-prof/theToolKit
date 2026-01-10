@@ -15,7 +15,7 @@ When called from another repository, this reusable workflow runs on `ubuntu-late
 
 ### Job 1: Log Issue Details (Real-time Events)
 
-This job is triggered when `trigger_log_issue_details` input is set to `'true'`. It performs two main steps:
+This job is triggered when `trigger-log-issue-details` input is set to `true`. It performs two main steps:
 
 #### Step 1: Log Issue Information
 
@@ -46,7 +46,7 @@ The Discord message is formatted with markdown for better readability in Discord
 
 ### Job 2: Periodic Issues Updates
 
-This job is triggered when `trigger_periodic_issues_updates` input is set to `'true'`. It performs the following:
+This job is triggered when `trigger-periodic-issues-updates` input is set to `true`. It performs the following:
 
 #### Step 1: Get All Issues
 
@@ -75,10 +75,10 @@ Fetches all issues from the repository using the GitHub API:
 
 The workflow accepts the following optional inputs:
 
-| Input                             | Type   | Required | Default   | Description                                                                          |
-| --------------------------------- | ------ | -------- | --------- | ------------------------------------------------------------------------------------ |
-| `trigger_log_issue_details`       | string | false    | `"false"` | Set to `"true"` to enable real-time issue event monitoring and Discord notifications |
-| `trigger_periodic_issues_updates` | string | false    | `"false"` | Set to `"true"` to enable periodic fetching and processing of all issues             |
+| Input                             | Type    | Required | Default | Description                                                                        |
+| --------------------------------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------- |
+| `trigger-log-issue-details`       | boolean | false    | `false` | Set to `true` to enable real-time issue event monitoring and Discord notifications |
+| `trigger-periodic-issues-updates` | boolean | false    | `false` | Set to `true` to enable periodic fetching and processing of all issues             |
 
 ## Supported Event Types
 
@@ -123,7 +123,7 @@ jobs:
   notify_discord:
     uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     with:
-      trigger_log_issue_details: "true"
+      trigger-log-issue-details: true
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 ```
@@ -144,12 +144,12 @@ jobs:
   periodic_update:
     uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     with:
-      trigger_periodic_issues_updates: "true"
+      trigger-periodic-issues-updates: true
 ```
 
 ### Using Both Modes
 
-You can also use both modes simultaneously by setting both inputs to `"true"`:
+You can also use both modes simultaneously by setting both inputs to `true`:
 
 ```yaml
 name: Complete Issue Integration
@@ -165,7 +165,7 @@ jobs:
     if: github.event_name == 'issues' || github.event_name == 'issue_comment'
     uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     with:
-      trigger_log_issue_details: "true"
+      trigger-log-issue-details: true
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
@@ -173,7 +173,7 @@ jobs:
     if: github.event_name == 'schedule'
     uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     with:
-      trigger_periodic_issues_updates: "true"
+      trigger-periodic-issues-updates: true
 ```
 
 ## Example Output
@@ -234,7 +234,7 @@ Reading ISSUES_JSON.json
 
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending messages
 - **Format**: Messages are formatted with markdown for Discord compatibility
-- **Conditional Execution**: Job only runs when `trigger_log_issue_details` input is `"true"`
+- **Conditional Execution**: Job only runs when `trigger-log-issue-details` input is `true`
 
 ### Periodic Updates
 
@@ -242,7 +242,7 @@ Reading ISSUES_JSON.json
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
 - **Output**: Saves all issues as JSON to `ISSUES_JSON.json` file
 - **Runner**: Uses `ubuntu-latest` runner
-- **Conditional Execution**: Job only runs when `trigger_periodic_issues_updates` input is `"true"`
+- **Conditional Execution**: Job only runs when `trigger-periodic-issues-updates` input is `true`
 
 The workflow requires read permissions on the repository, which is the default for `GITHUB_TOKEN`.
 
