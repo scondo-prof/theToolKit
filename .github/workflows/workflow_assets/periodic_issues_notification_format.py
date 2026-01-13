@@ -16,15 +16,11 @@ for issue in issues:
 ## Issue Title: {issue['number']} - {issue['title']}
 
 Issue State: {issue['state']}
-
 Created By: {issue['user']['login']}
-
-![Avatar]({issue['user']['avatar_url']})
-
 Issue Created At: {issue['created_at']}
 Issue Last Update: {issue['updated_at']}
 
-[Issue Link]({issue['html_url']})
+## [Issue Link]({issue['html_url']})
 """
 
 # GitHub provides the path to the outputs file here:
