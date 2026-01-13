@@ -82,16 +82,21 @@ Formats the issues data into a Discord-friendly message using the `periodic_issu
 The `periodic_issues_notification_format.py` script (located in `.github/workflows/workflow_assets/`) is a critical component of the periodic updates job. It performs the following operations:
 
 1. **Reads the Issues Data**: Opens and parses the `issues.json` file created in the previous step
-2. **Formats Each Issue**: For each issue in the JSON array, it extracts and formats:
-   - Issue number and title (as a header)
-   - Issue state (open/closed) with markdown formatting
-   - Creator username
-   - Creation timestamp (`created_at`)
-   - Last update timestamp (`updated_at`)
-   - Direct link to the issue on GitHub
-3. **Creates a Date Header**: Adds a formatted date header showing when the notification was generated
-4. **Builds Discord Message**: Constructs a complete markdown-formatted message suitable for Discord
-5. **Sets Workflow Output**: Writes the formatted message to `GITHUB_OUTPUT` so it can be used by the next step
+2. **Filters and Formats Open Issues**: For each issue in the JSON array:
+   - **Filters closed issues**: Only open issues are included in the detailed Discord message (closed issues are counted separately)
+   - **Formats open issues** with:
+     - Issue number and title (as a header)
+     - Issue state (open) with markdown formatting
+     - Creator username
+     - Creation timestamp (`created_at`)
+     - Last update timestamp (`updated_at`)
+     - Direct link to the issue on GitHub
+3. **Counts Closed Issues**: Tracks the total number of closed issues separately
+4. **Creates a Date Header**: Adds a formatted date header showing when the notification was generated
+5. **Builds Discord Message**: Constructs a complete markdown-formatted message suitable for Discord, including:
+   - Detailed information for all open issues
+   - A summary footer showing the total count of closed issues
+6. **Sets Workflow Output**: Writes the formatted message to `GITHUB_OUTPUT` so it can be used by the next step
 
 **How It Integrates with the Workflow:**
 
@@ -280,7 +285,7 @@ jobs:
 This pattern allows you to:
 
 - Get real-time notifications when issues are created, closed, reopened, or deleted
-- Receive daily summaries of all issues via scheduled runs
+- Receive daily summaries of open issues (with closed issue count) via scheduled runs
 - Manually trigger periodic updates on-demand using workflow dispatch
 
 ## Example Output
@@ -320,6 +325,8 @@ Trigger Reason: The workflow was triggered by an | issues | event with action | 
 
 #### Discord Message Example:
 
+**Note:** The script filters out closed issues from the detailed display and only shows open issues. A summary count of closed issues is included at the end.
+
 ```
 ---
 # Issues as of 2024-01-15
@@ -328,16 +335,15 @@ Trigger Reason: The workflow was triggered by an | issues | event with action | 
 
 ## Issue Title: 1 - Example Issue
 
-Issue State: open
+__Issue State__: `open`
+__Created By__: `username`
+__Issue Created At__: `2024-01-15T10:30:00Z`
+__Issue Last Update__: `2024-01-15T12:00:00Z`
+## [Issue Link](https://github.com/owner/repo/issues/1)
 
-Created By: username
 
-![Avatar](https://avatars.githubusercontent.com/u/123?v=4)
-
-Issue Created At: 2024-01-15T10:30:00Z
-Issue Last Update: 2024-01-15T12:00:00Z
-
-[Issue Link](https://github.com/owner/repo/issues/1)
+__Total Closed Issues__: `5`
+---------------------------------------------------
 ```
 
 ## Technical Details
@@ -356,8 +362,8 @@ Issue Last Update: 2024-01-15T12:00:00Z
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
 - **Output**: Saves all issues (open and closed) as JSON to `issues.json` file
 - **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
-  - The script reads `issues.json`, formats each issue with metadata, and writes the formatted message to `GITHUB_OUTPUT`
-  - The formatted message includes a date header, issue numbers, titles, states, creators, timestamps, and links
+  - The script reads `issues.json`, filters out closed issues from the detailed display, and writes the formatted message to `GITHUB_OUTPUT`
+  - The formatted message includes a date header, detailed information for open issues (numbers, titles, states, creators, timestamps, and links), and a summary footer with the total count of closed issues
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
 - **Runner**: Uses `ubuntu-latest` runner
 - **Conditional Execution**: Job only runs when `trigger-periodic-issues-updates` input is `true`
@@ -368,7 +374,9 @@ This workflow uses assets from the `workflow_assets/` directory:
 
 - **periodic_issues_notification_format.py**: A Python script that processes GitHub issues JSON data and formats it into a Discord-compatible markdown message. The script:
   - Parses the `issues.json` file created by the "Get all issues" step
-  - Formats each issue with structured markdown (headers, metadata, links)
+  - Filters closed issues from the detailed display (only open issues are shown with full details)
+  - Counts closed issues separately and includes a summary count at the end
+  - Formats each open issue with structured markdown (headers, metadata, links)
   - Generates a timestamped header for the notification
   - Outputs the formatted message to `GITHUB_OUTPUT` for use in subsequent workflow steps
   - Handles UTF-8 encoding to support international characters

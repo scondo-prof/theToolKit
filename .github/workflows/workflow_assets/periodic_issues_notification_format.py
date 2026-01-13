@@ -10,8 +10,13 @@ discord_message = f"""---
 with open("issues.json", "r", encoding="utf-8") as issues_file:
     issues = json.load(issues_file)
 
+total_closed_issues = 0
 for issue in issues:
-    discord_message += f"""
+    if issue["state"] == "closed":
+        total_closed_issues += 1
+    else:
+
+        discord_message += f"""
 ## Issue Title: {issue['number']} - {issue['title']}
 
 __Issue State__: `{issue['state']}`
@@ -21,9 +26,9 @@ __Issue Last Update__: `{issue['updated_at']}`
 ## [Issue Link]({issue['html_url']})
 """
 
-discord_message += """
+discord_message += f"""
 
-
+__Total Closed Issues__: `{total_closed_issues}`
 ---------------------------------------------------
 """
 
