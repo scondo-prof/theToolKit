@@ -12,14 +12,12 @@ with open("issues.json", "r", encoding="utf-8") as issues_file:
 
 for issue in issues:
     discord_message += f"""
-
 ## Issue Title: {issue['number']} - {issue['title']}
 
 Issue State: {issue['state']}
 Created By: {issue['user']['login']}
 Issue Created At: {issue['created_at']}
 Issue Last Update: {issue['updated_at']}
-
 ## [Issue Link]({issue['html_url']})
 """
 
