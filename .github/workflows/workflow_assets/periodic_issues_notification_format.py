@@ -29,6 +29,6 @@ Issue Last Update: {issue['updated_at']}
  """
         discord_message += issue_message
 
-os.environ["GITHUB_OUTPUT"] = f"discord_message={discord_message}"
+os.environ["GITHUB_OUTPUT"] = f"discord_message=test"
 
 print(f" This is the GITHUB_OUTPUT: {os.getenv('GITHUB_OUTPUT')}")
