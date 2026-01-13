@@ -21,6 +21,12 @@ Issue Last Update: {issue['updated_at']}
 ## [Issue Link]({issue['html_url']})
 """
 
+discord_message += """
+
+
+---------------------------------------------------
+"""
+
 # GitHub provides the path to the outputs file here:
 output_path = os.environ["GITHUB_OUTPUT"]
 
