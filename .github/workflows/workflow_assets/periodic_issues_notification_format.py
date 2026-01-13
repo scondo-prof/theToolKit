@@ -3,7 +3,7 @@ import json
 import os
 
 discord_message = f"""---
-# Issues as of {datetime.now().strftime('%Y-%m-%d')}
+# _Issues as of {datetime.now().strftime('%Y-%m-%d')}_
 ---------------------------------------------------
 """
 
@@ -14,10 +14,10 @@ for issue in issues:
     discord_message += f"""
 ## Issue Title: {issue['number']} - {issue['title']}
 
-Issue State: {issue['state']}
-Created By: {issue['user']['login']}
-Issue Created At: {issue['created_at']}
-Issue Last Update: {issue['updated_at']}
+__Issue State__: `{issue['state']}`
+__Created By__: `{issue['user']['login']}`
+__Issue Created At__: `{issue['created_at']}`
+__Issue Last Update__: `{issue['updated_at']}`
 ## [Issue Link]({issue['html_url']})
 """
 
