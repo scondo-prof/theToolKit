@@ -11,6 +11,33 @@ These workflows use `workflow_call` triggers, which allows them to be invoked fr
 - **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord
 - **github-issues-discord-periodic-updates.yml** - Periodically fetches and sends all repository issues to Discord
 
+## Workflow Assets
+
+The `workflow_assets/` directory contains supporting scripts and resources used by the reusable workflows. These assets are typically Python scripts, JSON files, or other helper files that workflows need to execute their functionality.
+
+### What Are Workflow Assets?
+
+Workflow assets are auxiliary files that:
+
+- Provide reusable logic for workflows (e.g., data formatting, processing scripts)
+- Are stored in the `.github/workflows/workflow_assets/` directory
+- Are checked out along with the workflow when using reusable workflows
+- Enable workflows to perform complex operations that would be difficult to express purely in YAML
+
+### Current Workflow Assets
+
+- **periodic_issues_notification_format.py** - Python script used by `github-issues-discord-integration.yml` to format GitHub issues data into Discord-friendly markdown messages. See the [workflow documentation](workflow_docs/github-issues-discord-integration.md) for details on how it's used.
+
+### Using Workflow Assets
+
+When a reusable workflow uses assets from `workflow_assets/`, the calling repository must:
+
+1. Ensure the workflow checks out the repository (using `actions/checkout@v4`)
+2. Have the required runtime environment (e.g., Python) set up if the asset is a script
+3. Ensure the asset file exists in the repository where the workflow is defined
+
+The assets are automatically available when the workflow checks out the repository code.
+
 ## How to Integrate a Remote Workflow
 
 To use one of these workflows in your repository, follow these steps:

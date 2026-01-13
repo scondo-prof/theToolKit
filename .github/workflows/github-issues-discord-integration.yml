@@ -68,7 +68,7 @@ jobs:
         id: get_all_issues
         run: |
           echo "Getting all issues"
-          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/issues | jq '.' > issues.json
+          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues?state=all" | jq '.' > issues.json
 
       - name: Create Discord Notification from issues.json
         id: create_discord_notification
