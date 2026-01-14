@@ -2,15 +2,15 @@ from datetime import datetime
 import json
 import os
 
-discord_message = f"""---
+discord_message: str = f"""---
 # _Issues as of {datetime.now().strftime('%Y-%m-%d')}_
 ---------------------------------------------------
 """
 
 with open("issues.json", "r", encoding="utf-8") as issues_file:
-    issues = json.load(issues_file)
+    issues: list[dict] = json.load(issues_file)
 
-total_closed_issues = 0
+total_closed_issues: int = 0
 for issue in issues:
     if issue["state"] == "closed":
         total_closed_issues += 1
@@ -33,7 +33,7 @@ __Total Closed Issues__: `{total_closed_issues}`
 """
 
 # GitHub provides the path to the outputs file here:
-output_path = os.environ["GITHUB_OUTPUT"]
+output_path: str = os.environ["GITHUB_OUTPUT"]
 
 # Write a multiline output
 with open(output_path, "a", encoding="utf-8") as f:

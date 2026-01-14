@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: scondo-prof/theToolKit
-          ref: 5-gh-periodic-issue-updates
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -80,19 +80,3 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           content: ${{ steps.create_discord_notification.outputs.discord_message }}
-
-      #!! example of how to use outputs from one job in another job
-# jobs:
-#   example:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Compute value
-#         id: compute
-#         run: |
-#           VALUE="cool-beans"
-#           echo "result=$VALUE" >> "$GITHUB_OUTPUT"
-
-#       - name: Use value
-#         run: |
-#           echo "Result is: ${{ steps.compute.outputs.result }}"
-
