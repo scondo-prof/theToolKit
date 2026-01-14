@@ -9,6 +9,34 @@ These workflows use `workflow_call` triggers, which allows them to be invoked fr
 ## Available Workflows
 
 - **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord
+- **github-issues-discord-periodic-updates.yml** - Periodically fetches and sends all repository issues to Discord
+
+## Workflow Assets
+
+The `workflow_assets/` directory contains supporting scripts and resources used by the reusable workflows. These assets are typically Python scripts, JSON files, or other helper files that workflows need to execute their functionality.
+
+### What Are Workflow Assets?
+
+Workflow assets are auxiliary files that:
+
+- Provide reusable logic for workflows (e.g., data formatting, processing scripts)
+- Are stored in the `.github/workflows/workflow_assets/` directory
+- Are checked out along with the workflow when using reusable workflows
+- Enable workflows to perform complex operations that would be difficult to express purely in YAML
+
+### Current Workflow Assets
+
+- **periodic_issues_notification_format.py** - Python script used by `github-issues-discord-integration.yml` to format GitHub issues data into Discord-friendly markdown messages. See the [workflow documentation](workflow_docs/github-issues-discord-integration.md) for details on how it's used.
+
+### Using Workflow Assets
+
+When a reusable workflow uses assets from `workflow_assets/`, the calling repository must:
+
+1. Ensure the workflow checks out the repository (using `actions/checkout@v4`)
+2. Have the required runtime environment (e.g., Python) set up if the asset is a script
+3. Ensure the asset file exists in the repository where the workflow is defined
+
+The assets are automatically available when the workflow checks out the repository code.
 
 ## How to Integrate a Remote Workflow
 
@@ -26,6 +54,27 @@ To add secrets:
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 4. Add the secret name and value
+
+### Step 1.5: Configure GITHUB_TOKEN Permissions (If Needed)
+
+**Important**: The `GITHUB_TOKEN` secret is automatically provided by GitHub Actions, but it defaults to **read-only permissions**.
+
+If your workflow needs write permissions (e.g., to create issues, update files, etc.), you must modify the workflow permissions:
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Actions** → **General**
+3. Scroll down to **Workflow permissions**
+4. Select **Read and write permissions** (instead of the default **Read repository contents and packages permissions**)
+5. Optionally, you can also set permissions in the workflow file itself using the `permissions:` key:
+
+```yaml
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+```
+
+**Note**: For most workflows that only read repository data (like fetching issues), the default read-only permissions are sufficient. Only modify permissions if your workflow needs to write to the repository.
 
 ### Step 2: Create a Workflow File in Your Repository
 
@@ -214,6 +263,34 @@ When working with GitHub Actions workflows, you'll often need to reference GitHu
 - `github.actor` - The username of the user that triggered the workflow
 - `github.event.issue.*` - Issue-specific data from the event payload
 - `github.event.pull_request.*` - Pull request-specific data from the event payload
+
+## Default Environment Variables (Built-in Variables)
+
+GitHub Actions automatically sets default environment variables that you can use in your workflows:
+
+- **[Default Environment Variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)** - Complete list of all default environment variables set by GitHub Actions
+
+### Common Default Environment Variables
+
+These variables are available as environment variables (e.g., `$GITHUB_WORKFLOW`) and can also be accessed via the GitHub context (e.g., `${{ github.workflow }}`):
+
+- `GITHUB_WORKFLOW` / `github.workflow` - The name of the workflow
+- `GITHUB_RUN_ID` / `github.run_id` - A unique number for each workflow run within a repository
+- `GITHUB_RUN_NUMBER` / `github.run_number` - A unique number for each run of a particular workflow in a repository
+- `GITHUB_REPOSITORY` / `github.repository` - The owner and repository name (e.g., "owner/repo")
+- `GITHUB_REPOSITORY_OWNER` / `github.repository_owner` - The repository owner's name
+- `GITHUB_REPOSITORY_URL` - The full URL to the repository (e.g., "https://github.com/owner/repo")
+- `GITHUB_REF` / `github.ref` - The branch or tag ref that triggered the workflow
+- `GITHUB_SHA` / `github.sha` - The commit SHA that triggered the workflow
+- `GITHUB_ACTOR` / `github.actor` - The username of the user that initiated the workflow run
+- `GITHUB_SERVER_URL` / `github.server_url` - The URL of the GitHub server (e.g., "https://github.com")
+- `GITHUB_API_URL` / `github.api_url` - The URL of the GitHub REST API
+
+### Workflow Run URLs
+
+You can construct URLs to workflow runs using these variables:
+
+- Workflow run URL: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
 
 ## Related Documentation
 
