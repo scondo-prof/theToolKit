@@ -2,20 +2,20 @@
 
 ## Overview
 
-This reusable GitHub Actions workflow provides two modes of operation for monitoring GitHub issues and sending notifications to Discord:
+This reusable GitHub Actions workflow provides two independent jobs for monitoring GitHub issues and sending notifications to Discord:
 
 1. **Real-time Issue Events**: Monitors GitHub issue events and sends formatted notifications to Discord as they happen
-2. **Periodic Updates**: Periodically fetches all issues from a repository and processes them (can be extended to send periodic summaries to Discord)
+2. **Periodic Updates**: Fetches all issues from a repository and processes them into Discord notifications
 
-Both modes are controlled through workflow inputs, allowing you to selectively enable the functionality you need when calling this reusable workflow.
+**Important**: Each job runs **only when its corresponding input is set to `true` AND its conditional check passes**. Jobs are independent and will not run simultaneously unless explicitly configured to do so in the calling workflow with appropriate conditional logic.
 
 ## What It Does
 
-When called from another repository, this reusable workflow runs on `ubuntu-latest` and can perform one or both of the following jobs based on input parameters:
+When called from another repository, this reusable workflow runs on `ubuntu-latest` and contains two independent jobs that execute **only when their conditions are met**:
 
 ### Job 1: Log Issue Details (Real-time Events)
 
-This job is triggered when `trigger-log-issue-details` input is set to `true`. It performs two main steps:
+**Conditional Execution**: This job **only runs** when `trigger-log-issue-details` input is set to `true` AND the job's `if` condition evaluates to true. It performs two main steps:
 
 #### Step 1: Log Issue Information
 
@@ -46,7 +46,7 @@ The Discord message is formatted with markdown for better readability in Discord
 
 ### Job 2: Periodic Issues Updates
 
-This job is triggered when `trigger-periodic-issues-updates` input is set to `true`. It performs the following:
+**Conditional Execution**: This job **only runs** when `trigger-periodic-issues-updates` input is set to `true` AND the job's `if` condition evaluates to true. It performs the following:
 
 #### Step 1: Checkout Repository
 
@@ -122,23 +122,23 @@ Sends the formatted message to Discord:
 
 ## Prerequisites
 
-- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for both real-time issue events and periodic updates)
+- A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for jobs that send Discord notifications)
 - The workflow must be called from a repository that has GitHub Actions enabled
 - **For Periodic Updates**: The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) must exist in the repository where the workflow is defined (the repository containing the reusable workflow, not the calling repository)
   - The workflow checks out the repository containing the workflow definition to access this script
   - The script is part of the `workflow_assets/` directory, which contains supporting files for workflows
 - `GITHUB_TOKEN` must have appropriate permissions to read repository issues
   - By default, `GITHUB_TOKEN` has read-only permissions
-  - For this workflow, read-only permissions are sufficient for both jobs
+  - For this workflow, read-only permissions are sufficient for all jobs
 
 ## Workflow Inputs
 
-The workflow accepts the following optional inputs:
+The workflow accepts the following optional inputs. **Important**: Each job only runs when its corresponding input is set to `true` AND the job's `if` condition in the workflow evaluates to true:
 
-| Input                             | Type    | Required | Default | Description                                                                        |
-| --------------------------------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------- |
-| `trigger-log-issue-details`       | boolean | false    | `false` | Set to `true` to enable real-time issue event monitoring and Discord notifications |
-| `trigger-periodic-issues-updates` | boolean | false    | `false` | Set to `true` to enable periodic fetching and processing of all issues             |
+| Input                             | Type    | Required | Default | Description                                                                                                                                                |
+| --------------------------------- | ------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger-log-issue-details`       | boolean | false    | `false` | Set to `true` to enable real-time issue event monitoring and Discord notifications. Job only runs when this is `true` AND the job's `if` condition passes. |
+| `trigger-periodic-issues-updates` | boolean | false    | `false` | Set to `true` to enable periodic fetching and processing of all issues. Job only runs when this is `true` AND the job's `if` condition passes.             |
 
 ## Supported Event Types
 
@@ -207,38 +207,9 @@ jobs:
       trigger-periodic-issues-updates: true
 ```
 
-### Using Both Modes
+### Complete Example: Real-time Events + Manual Trigger
 
-You can also use both modes simultaneously by setting both inputs to `true`:
-
-```yaml
-name: Complete Issue Integration
-
-on:
-  issues:
-    types: [opened, closed, reopened, edited]
-  schedule:
-    - cron: "0 9 * * *"
-
-jobs:
-  real_time_updates:
-    if: github.event_name == 'issues' || github.event_name == 'issue_comment'
-    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
-    with:
-      trigger-log-issue-details: true
-    secrets:
-      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-  periodic_update:
-    if: github.event_name == 'schedule'
-    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
-    with:
-      trigger-periodic-issues-updates: true
-```
-
-### Complete Example: Real-time Events + Scheduled Updates + Manual Trigger
-
-This example demonstrates a production-ready setup that combines real-time issue notifications with scheduled periodic updates, and includes manual triggering via `workflow_dispatch`:
+This example demonstrates a production-ready setup that combines real-time issue notifications with manual periodic updates via `workflow_dispatch`:
 
 ```yaml
 name: GitHub Issues to Discord Integration
@@ -251,22 +222,23 @@ on:
       - reopened
       - deleted
 
-  schedule:
-    - cron: "50 1 * * *"
+  issue_comment:
+    types:
+      - created
 
   workflow_dispatch:
 
 jobs:
   trigger-periodic-issues-updates:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@5-gh-periodic-issue-updates
+    if: github.event_name == 'workflow_dispatch'
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     secrets: inherit
     with:
       trigger-periodic-issues-updates: true
 
   trigger-log-issue-details:
-    if: github.event_name == 'issues'
-    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@5-gh-periodic-issue-updates
+    if: github.event_name == 'issues' || github.event_name == 'issue_comment'
+    uses: scondo-prof/theToolKit/.github/workflows/github-issues-discord-integration.yml@main
     secrets: inherit
     with:
       trigger-log-issue-details: true
@@ -274,18 +246,20 @@ jobs:
 
 **Key Features of This Example:**
 
-- **Multiple Trigger Types**: Responds to issue events, scheduled runs (daily at 1:50 AM UTC), and manual workflow dispatch
-- **Conditional Job Execution**: Uses `if` conditions to run the appropriate job based on the event type
-  - Periodic updates run on `schedule` or `workflow_dispatch` events
-  - Real-time issue details run on `issues` events
+- **Conditional Job Execution**: Each job **only runs when its conditions are met**:
+  - `trigger-periodic-issues-updates` job runs **only** when `github.event_name == 'workflow_dispatch'` (manual trigger)
+  - `trigger-log-issue-details` job runs **only** when `github.event_name == 'issues' || github.event_name == 'issue_comment'`
+  - Jobs are independent and will not run unless their specific conditions are true
+- **Multiple Trigger Types**: Responds to issue events, issue comments, and manual workflow dispatch
 - **Secrets Inheritance**: Uses `secrets: inherit` to automatically pass all repository secrets to the reusable workflow (cleaner than explicitly listing each secret)
-- **Specific Branch Reference**: Uses `@5-gh-periodic-issue-updates` to reference a specific branch/version of the workflow
-- **Selective Issue Events**: Only monitors specific issue event types (`opened`, `closed`, `reopened`, `deleted`) to reduce noise
+- **Main Branch Reference**: Uses `@main` to reference the main branch of the workflow repository
+- **Selective Issue Events**: Monitors specific issue event types (`opened`, `closed`, `reopened`, `deleted`) and issue comment creation to reduce noise
+- **Issue Comment Monitoring**: Also tracks when comments are created on issues for comprehensive issue activity tracking
 
 This pattern allows you to:
 
 - Get real-time notifications when issues are created, closed, reopened, or deleted
-- Receive daily summaries of open issues (with closed issue count) via scheduled runs
+- Get real-time notifications when comments are added to issues
 - Manually trigger periodic updates on-demand using workflow dispatch
 
 ## Example Output
@@ -352,7 +326,7 @@ __Total Closed Issues__: `5`
 
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending messages
 - **Format**: Messages are formatted with markdown for Discord compatibility
-- **Conditional Execution**: Job only runs when `trigger-log-issue-details` input is `true`
+- **Conditional Execution**: **Job only runs when** `trigger-log-issue-details` input is set to `true` **AND** the job's `if` condition evaluates to true. If either condition is false, the job will be skipped.
 
 ### Periodic Updates
 
@@ -366,7 +340,7 @@ __Total Closed Issues__: `5`
   - The formatted message includes a date header, detailed information for open issues (numbers, titles, states, creators, timestamps, and links), and a summary footer with the total count of closed issues
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
 - **Runner**: Uses `ubuntu-latest` runner
-- **Conditional Execution**: Job only runs when `trigger-periodic-issues-updates` input is `true`
+- **Conditional Execution**: **Job only runs when** `trigger-periodic-issues-updates` input is set to `true` **AND** the job's `if` condition evaluates to true. If either condition is false, the job will be skipped.
 
 ### Workflow Assets
 

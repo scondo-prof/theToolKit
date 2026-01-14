@@ -4,12 +4,101 @@ This directory contains reusable GitHub Actions workflows that can be called fro
 
 ## Overview
 
-These workflows use `workflow_call` triggers, which allows them to be invoked from other repositories. Each workflow is self-contained and designed to perform specific tasks when called.
+All workflows in this directory use the `workflow_call` trigger, making them invokable from any repository that has access to this repository.
+
+### Directory Structure
+
+```
+.github/workflows/
+├── README.md                                    # This file - overview and integration guide
+├── github-issues-discord-integration.yml        # Reusable workflow (currently the only one)
+├── workflow_assets/                             # Supporting scripts and files for workflows
+│   └── periodic_issues_notification_format.py  # Python script used by workflows
+└── workflow_docs/                               # Detailed documentation for each workflow
+    └── github-issues-discord-integration.md     # Documentation for the issues integration workflow
+```
+
+### Reusability
+
+All workflows in this directory are designed to be reusable across multiple repositories. They:
+
+- Use `workflow_call` triggers to be invoked from other repositories
+- Accept inputs to customize behavior per repository
+- Are self-contained with clear documentation
+- Can be versioned using branch names, tags, or commit SHAs when called
 
 ## Available Workflows
 
-- **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord
-- **github-issues-discord-periodic-updates.yml** - Periodically fetches and sends all repository issues to Discord
+Currently, this directory contains one reusable workflow:
+
+- **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
+
+### Adding More Reusable Workflows
+
+To add additional reusable workflows to this directory:
+
+1. **Create a new workflow file** in `.github/workflows/` with a descriptive name (e.g., `workflow-name.yml`)
+2. **Use `workflow_call` trigger** - All reusable workflows must use the `workflow_call` trigger to be callable from other repositories:
+
+   ```yaml
+   name: Your Workflow Name
+
+   on:
+     workflow_call:
+       inputs:
+         # Define any inputs your workflow needs
+         example-input:
+           required: false
+           type: string
+           description: "Example input parameter"
+   ```
+
+3. **Create documentation** - Add a markdown file in `workflow_docs/` directory (e.g., `workflow_docs/workflow-name.md`) that explains:
+
+   - What the workflow does
+   - Required inputs and secrets
+   - How to use it
+   - Example configurations
+
+4. **Add workflow assets if needed** - If your workflow requires supporting scripts or files, place them in `workflow_assets/` and document their usage
+
+5. **Update this README** - Add your new workflow to the "Available Workflows" section above
+
+All workflows in this directory are designed to be reusable and can be called from any repository that has access to this repository. See the "How to Integrate a Remote Workflow" section below for details on how other repositories can use these workflows.
+
+### Workflow Development Best Practices
+
+When creating new reusable workflows, follow these guidelines:
+
+1. **Use descriptive names** - Workflow filenames should clearly indicate their purpose (e.g., `github-issues-discord-integration.yml`)
+
+2. **Define clear inputs** - Use the `workflow_call` inputs to make workflows configurable:
+
+   ```yaml
+   on:
+     workflow_call:
+       inputs:
+         my-input:
+           required: false
+           type: string
+           description: "Clear description of what this input does"
+           default: "default-value"
+   ```
+
+3. **Use conditional execution** - Use `if` conditions to control when jobs run based on inputs or event context
+
+4. **Document thoroughly** - Create comprehensive documentation in `workflow_docs/` that includes:
+
+   - Overview and purpose
+   - Required inputs and secrets
+   - Usage examples
+   - Technical details
+
+5. **Handle errors gracefully** - Include error handling and clear failure messages
+
+6. **Version your workflows** - When making breaking changes, consider using tags or branches for versioning
+
+7. **Test before sharing** - Test workflows thoroughly before making them available to other repositories
 
 ## Workflow Assets
 
@@ -37,6 +126,24 @@ When a reusable workflow uses assets from `workflow_assets/`, the calling reposi
 3. Ensure the asset file exists in the repository where the workflow is defined
 
 The assets are automatically available when the workflow checks out the repository code.
+
+## How Reusable Workflows Work
+
+All workflows in this directory are designed to be **reusable across multiple repositories**. Here's how it works:
+
+1. **Single Source of Truth** - Workflows are defined once in this repository
+2. **Version Control** - Other repositories can reference specific versions using branches, tags, or commit SHAs
+3. **Consistent Behavior** - All repositories using the same workflow version get the same functionality
+4. **Easy Updates** - When a workflow is improved, repositories can update by changing the version reference
+5. **Isolation** - Each repository's workflow runs independently with its own secrets and context
+
+### Benefits of This Approach
+
+- **DRY Principle** - Write workflows once, use them everywhere
+- **Maintainability** - Fix bugs or add features in one place
+- **Consistency** - Ensure all repositories use the same proven workflow logic
+- **Flexibility** - Each repository can customize behavior through inputs
+- **Versioning** - Repositories can pin to specific workflow versions for stability
 
 ## How to Integrate a Remote Workflow
 
@@ -128,7 +235,7 @@ jobs:
 
 ### Complete Example
 
-Here's a complete example workflow file that calls the GitHub Issues Discord Integration workflow:
+Here's a complete example workflow file that calls the GitHub Issues Discord Integration workflow (this pattern applies to any reusable workflow in this directory):
 
 ```yaml
 name: GitHub Issues to Discord
