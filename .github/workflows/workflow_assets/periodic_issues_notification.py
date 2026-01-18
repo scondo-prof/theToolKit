@@ -5,17 +5,100 @@ import os
 import httpx
 
 
-def format_and_send_to_discord(issues_file_path: str = "issues.json", github_repository: str | None = None) -> bool:
+def get_gh_issues(github_repository: str | None = None, desired_issue_state: str = "all") -> list[dict]:
+    """Get GitHub issues from the repository with pagination support.
+
+    Fetches all issues from the repository by automatically handling pagination.
+    Uses per_page=100 to maximize items per request and follows Link headers
+    to fetch all pages.
+
+    Args:
+        github_repository: GitHub repository in the format "owner/repo" (e.g.,
+            "scondo-prof/the_ticketing_system"). If None, attempts to read from
+            the GITHUB_REPOSITORY environment variable. If not available,
+            defaults to an empty string.
+        desired_issue_state: The state of issues to retrieve. Valid values are
+            "open", "closed", or "all". Defaults to "all".
+
+    Returns:
+        list[dict]: A list of all issues from all pages combined.
+
+    Raises:
+        Exception: If the GitHub API returns a non-200 status code.
+
+    Note:
+        - Automatically handles pagination to fetch all issues.
+        - Uses per_page=100 to minimize the number of API requests.
+        - Requires GITHUB_TOKEN environment variable to be set.
+    """
+    # Get GitHub repository from parameter or environment variable
+    if github_repository is None:
+        github_repository: str = os.getenv("GITHUB_REPOSITORY", "")
+
+    all_issues: list[dict] = []
+    page: int = 1
+    per_page: int = 100
+
+    headers: dict[str, str] = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {os.getenv('GITHUB_TOKEN')}",
+    }
+
+    while True:
+        url: str = (
+            f"https://api.github.com/repos/{github_repository}/issues"
+            f"?state={desired_issue_state}&page={page}&per_page={per_page}"
+        )
+
+        response: httpx.Response = httpx.get(url, headers=headers)
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to get GitHub issues: {response.status_code} - {response.text}")
+
+        page_issues: list[dict] = response.json()
+
+        # If no issues returned, we've reached the end
+        if not page_issues:
+            break
+
+        all_issues.extend(page_issues)
+
+        # If we got fewer items than per_page, we're definitely on the last page
+        if len(page_issues) < per_page:
+            break
+
+        # Check Link header for "next" rel to see if there are more pages
+        link_header: str | None = response.headers.get("Link")
+        has_next: bool = False
+
+        if link_header:
+            # Parse Link header to check for "next" rel
+            links = link_header.split(",")
+            for link in links:
+                if 'rel="next"' in link:
+                    has_next = True
+                    break
+
+        # If no "next" link found, we're done (even if we got a full page)
+        if not has_next:
+            break
+
+        # Move to next page
+        page += 1
+
+    print(f"Retrieved {len(all_issues)} issues across {page} page(s)")
+    return all_issues
+
+
+def format_and_send_to_discord(issues: list[dict], github_repository: str | None = None) -> bool:
     """Format GitHub issues data and send Discord messages in batches.
 
-    Reads issues from a JSON file, formats them into Discord-compatible markdown
+    Takes a list of issue dictionaries, formats them into Discord-compatible markdown
     messages, and sends them directly to Discord. Messages are sent in batches of
     3 issues per message to avoid Discord message length limits.
 
     Args:
-        issues_file_path: Path to the JSON file containing issues data.
-            Defaults to "issues.json". The file must contain a list of issue
-            dictionaries with the following keys:
+        issues: A list of issue dictionaries with the following keys:
             - 'number': Issue number
             - 'title': Issue title
             - 'state': Issue state (e.g., 'open', 'closed')
@@ -41,17 +124,13 @@ def format_and_send_to_discord(issues_file_path: str = "issues.json", github_rep
     """
 
     discord_message: str = f"""---
-# _Issues as of {datetime.now().strftime('%Y-%m-%d')}_
+# `Open Issues` _as of_ `{datetime.now().strftime('%Y-%m-%d')}`
 ---------------------------------------------------
 """
 
     # Get GitHub repository from parameter or environment variable
     if github_repository is None:
-        github_repository = os.getenv("GITHUB_REPOSITORY", "")
-
-    # Issu Data Source
-    with open(issues_file_path, "r", encoding="utf-8") as issues_file:
-        issues: list[dict] = json.load(issues_file)
+        github_repository: str = os.getenv("GITHUB_REPOSITORY", "")
 
     total_closed_issues: int = 0
     total_open_issues: int = 0
@@ -74,8 +153,8 @@ __Issue Last Update__: `{issue['updated_at']}`
 """
         if issue_send_cutoff >= 3:
             send_to_discord(discord_message)
-            discord_message = ""
-            issue_send_cutoff = 0
+            discord_message: str = ""
+            issue_send_cutoff: int = 0
 
     discord_message += f"""
 
@@ -111,8 +190,8 @@ def send_to_discord(discord_message: str) -> None:
     if discord_webhook_url is None:
         raise Exception("DISCORD_WEBHOOK_URL is not set")
 
-    headers = {"Content-Type": "application/json"}
-    data = {"content": discord_message}
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    data: dict[str, str] = {"content": discord_message}
     response = httpx.post(discord_webhook_url, headers=headers, json=data)
     if response.status_code == 204:
         print(f"Message sent to Discord successfully: {response.status_code}")
@@ -123,4 +202,5 @@ def send_to_discord(discord_message: str) -> None:
 
 
 if __name__ == "__main__":
-    format_and_send_to_discord()
+    issues: list[dict] = get_gh_issues()
+    format_and_send_to_discord(issues)

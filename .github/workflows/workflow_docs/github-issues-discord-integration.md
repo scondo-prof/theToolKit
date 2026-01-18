@@ -62,18 +62,7 @@ Configures the Python environment:
 - Uses `actions/setup-python@v5` to set up Python 3.11
 - Ensures the correct Python version is available for running the formatting script
 
-#### Step 3: Get All Issues
-
-Fetches all issues from the repository using the GitHub API:
-
-- Uses `curl` to make a GET request to the GitHub API
-- Authenticates using `secrets.GITHUB_TOKEN`
-- Retrieves **all issues** (both open and closed) by using `?state=all` query parameter
-- Saves the response as JSON to `issues.json`
-
-**Note:** The API call includes `?state=all` to ensure both open and closed issues are retrieved. Without this parameter, the API would only return open issues by default.
-
-#### Step 4: Format and Send Discord Notification
+#### Step 3: Format and Send Discord Notification
 
 Formats the issues data and sends Discord messages directly using the `periodic_issues_notification.py` script:
 
@@ -81,7 +70,7 @@ Formats the issues data and sends Discord messages directly using the `periodic_
 
 The `periodic_issues_notification.py` script (located in `.github/workflows/workflow_assets/`) is a critical component of the periodic updates job. It performs the following operations:
 
-1. **Reads the Issues Data**: Opens and parses the `issues.json` file created in the previous step
+1. **Fetches Issues Data**: Uses the GitHub API to fetch all issues directly from the repository with automatic pagination support (handles repositories with any number of issues)
 2. **Filters and Formats Open Issues**: For each issue in the JSON array:
    - **Filters closed issues**: Only open issues are included in the detailed Discord message (closed issues are counted separately)
    - **Formats open issues** with:
@@ -99,19 +88,20 @@ The `periodic_issues_notification.py` script (located in `.github/workflows/work
 
 **How It Integrates with the Workflow:**
 
-- The script is executed after the workflow fetches all issues via the GitHub API
-- It processes the raw JSON data and transforms it into human-readable Discord messages
+- The script is executed directly and fetches all issues via the GitHub API internally
+- It processes the issue data and transforms it into human-readable Discord messages
 - Messages are sent directly to Discord via the `httpx` library using the `DISCORD_WEBHOOK_URL` environment variable
-- No separate workflow step is needed for sending to Discord - the script handles it internally
+- No separate workflow step is needed for fetching issues or sending to Discord - the script handles everything internally
 
 **Technical Details:**
 
-- The script uses Python's `json` module to parse the issues data
+- The script uses the GitHub API with automatic pagination (fetches up to 100 issues per page and continues until all are retrieved)
+- Uses `httpx` library for both GitHub API requests and Discord webhook requests
 - It formats timestamps using Python's `datetime` module
 - Sends messages directly to Discord using `httpx` library with POST requests
 - Messages are sent in batches of 3 issues to prevent Discord message length limits
 - The script ensures proper encoding (UTF-8) for international characters in issue titles and descriptions
-- Requires `DISCORD_WEBHOOK_URL` environment variable to be set for sending messages
+- Requires both `GITHUB_TOKEN` and `DISCORD_WEBHOOK_URL` environment variables to be set
 
 ## Prerequisites
 
@@ -327,9 +317,9 @@ __Issue Last Update__: `2024-01-15T12:00:00Z`
 - **Python Setup**: Uses `actions/setup-python@v5` to configure Python 3.11 environment
 - **API Endpoint**: `GET /repos/{owner}/{repo}/issues?state=all` (includes both open and closed issues)
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
-- **Output**: Saves all issues (open and closed) as JSON to `issues.json` file
-- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) to format issues and send Discord messages
-  - The script reads the issues JSON file (defaults to `issues.json` but accepts a configurable path via the `issues_file_path` parameter), filters out closed issues from the detailed display, and sends messages directly to Discord
+- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) to fetch, format issues, and send Discord messages
+  - The script fetches all issues directly from the GitHub API with automatic pagination support (handles repositories with any number of issues)
+  - Filters out closed issues from the detailed display and sends messages directly to Discord
   - Messages are sent in batches of 3 issues per message to avoid Discord message length limits
   - The formatted messages include a date header, detailed information for open issues (numbers, titles, states, creators, timestamps), and a final summary message with total counts of both open and closed issues as clickable links
 - **Discord Integration**: The Python script sends messages directly to Discord using `httpx` library via the `DISCORD_WEBHOOK_URL` environment variable
@@ -340,8 +330,8 @@ __Issue Last Update__: `2024-01-15T12:00:00Z`
 
 This workflow uses assets from the `workflow_assets/` directory:
 
-- **periodic_issues_notification.py**: A Python script that processes GitHub issues JSON data, formats it into Discord-compatible markdown messages, and sends them directly to Discord. The script:
-  - Parses the issues JSON file (defaults to `issues.json`, but accepts a configurable path via the `issues_file_path` parameter) created by the "Get all issues" step
+- **periodic_issues_notification.py**: A Python script that fetches GitHub issues via API, formats them into Discord-compatible markdown messages, and sends them directly to Discord. The script:
+  - Fetches all issues directly from the GitHub API with automatic pagination (handles any number of issues by fetching up to 100 per page and continuing until all are retrieved)
   - Filters closed issues from the detailed display (only open issues are shown with full details)
   - Counts both open and closed issues separately
   - Formats each open issue with structured markdown (headers, metadata)
