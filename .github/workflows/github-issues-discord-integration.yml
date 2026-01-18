@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: scondo-prof/theToolKit
-          ref: 5-periodoic-issues-discord-fix # TODO: Change this to main once the fix is merged
+          ref: main
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
