@@ -62,26 +62,15 @@ Configures the Python environment:
 - Uses `actions/setup-python@v5` to set up Python 3.11
 - Ensures the correct Python version is available for running the formatting script
 
-#### Step 3: Get All Issues
+#### Step 3: Format and Send Discord Notification
 
-Fetches all issues from the repository using the GitHub API:
-
-- Uses `curl` to make a GET request to the GitHub API
-- Authenticates using `secrets.GITHUB_TOKEN`
-- Retrieves **all issues** (both open and closed) by using `?state=all` query parameter
-- Saves the response as JSON to `issues.json`
-
-**Note:** The API call includes `?state=all` to ensure both open and closed issues are retrieved. Without this parameter, the API would only return open issues by default.
-
-#### Step 4: Create Discord Notification
-
-Formats the issues data into a Discord-friendly message using the `periodic_issues_notification_format.py` script:
+Formats the issues data and sends Discord messages directly using the `periodic_issues_notification.py` script:
 
 **The Script's Role:**
 
-The `periodic_issues_notification_format.py` script (located in `.github/workflows/workflow_assets/`) is a critical component of the periodic updates job. It performs the following operations:
+The `periodic_issues_notification.py` script (located in `.github/workflows/workflow_assets/`) is a critical component of the periodic updates job. It performs the following operations:
 
-1. **Reads the Issues Data**: Opens and parses the `issues.json` file created in the previous step
+1. **Fetches Issues Data**: Uses the GitHub API to fetch all issues directly from the repository with automatic pagination support (handles repositories with any number of issues)
 2. **Filters and Formats Open Issues**: For each issue in the JSON array:
    - **Filters closed issues**: Only open issues are included in the detailed Discord message (closed issues are counted separately)
    - **Formats open issues** with:
@@ -90,41 +79,35 @@ The `periodic_issues_notification_format.py` script (located in `.github/workflo
      - Creator username
      - Creation timestamp (`created_at`)
      - Last update timestamp (`updated_at`)
-     - Direct link to the issue on GitHub
-3. **Counts Closed Issues**: Tracks the total number of closed issues separately
-4. **Creates a Date Header**: Adds a formatted date header showing when the notification was generated
-5. **Builds Discord Message**: Constructs a complete markdown-formatted message suitable for Discord, including:
-   - Detailed information for all open issues
-   - A summary footer showing the total count of closed issues
-6. **Sets Workflow Output**: Writes the formatted message to `GITHUB_OUTPUT` so it can be used by the next step
+3. **Batch Sending**: Sends messages to Discord in batches of 3 issues per message to avoid Discord message length limits
+4. **Counts Issues**: Tracks the total number of both open and closed issues separately
+5. **Creates a Date Header**: Adds a formatted date header showing when the notification was generated
+6. **Sends Summary Message**: After all issue batches are sent, sends a final summary message with:
+   - Total open issues count (as a clickable link to filtered open issues)
+   - Total closed issues count (as a clickable link to filtered closed issues)
 
 **How It Integrates with the Workflow:**
 
-- The script is executed after the workflow fetches all issues via the GitHub API
-- It processes the raw JSON data and transforms it into a human-readable Discord message
-- The formatted output is stored as a workflow step output (`discord_message`)
-- The next step (Send to Discord) uses this output to send the notification
+- The script is executed directly and fetches all issues via the GitHub API internally
+- It processes the issue data and transforms it into human-readable Discord messages
+- Messages are sent directly to Discord via the `httpx` library using the `DISCORD_WEBHOOK_URL` environment variable
+- No separate workflow step is needed for fetching issues or sending to Discord - the script handles everything internally
 
 **Technical Details:**
 
-- The script uses Python's `json` module to parse the issues data
+- The script uses the GitHub API with automatic pagination (fetches up to 100 issues per page and continues until all are retrieved)
+- Uses `httpx` library for both GitHub API requests and Discord webhook requests
 - It formats timestamps using Python's `datetime` module
-- The output is written to `GITHUB_OUTPUT` using the multiline output format (with `<<EOF` delimiter)
+- Sends messages directly to Discord using `httpx` library with POST requests
+- Messages are sent in batches of 3 issues to prevent Discord message length limits
 - The script ensures proper encoding (UTF-8) for international characters in issue titles and descriptions
-
-#### Step 5: Send to Discord
-
-Sends the formatted message to Discord:
-
-- Uses the `tsickert/discord-webhook@v7.0.0` action
-- Sends the formatted message created in the previous step
-- Message is formatted with markdown for better readability in Discord channels
+- Requires both `GITHUB_TOKEN` and `DISCORD_WEBHOOK_URL` environment variables to be set
 
 ## Prerequisites
 
 - A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for jobs that send Discord notifications)
 - The workflow must be called from a repository that has GitHub Actions enabled
-- **For Periodic Updates**: The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) must exist in the repository where the workflow is defined (the repository containing the reusable workflow, not the calling repository)
+- **For Periodic Updates**: The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) must exist in the repository where the workflow is defined (the repository containing the reusable workflow, not the calling repository)
   - The workflow checks out the repository containing the workflow definition to access this script
   - The script is part of the `workflow_assets/` directory, which contains supporting files for workflows
 - `GITHUB_TOKEN` must have appropriate permissions to read repository issues
@@ -190,15 +173,13 @@ jobs:
 
 ### Periodic Updates
 
-To use the workflow for periodic issue updates, call it from a scheduled workflow:
+To use the workflow for periodic issue updates, set up `workflow_dispatch` in your workflow and trigger it externally (e.g., via AWS Lambda with EventBridge cron, or any scheduled job service):
 
 ```yaml
 name: Daily Issues Update
 
 on:
-  schedule:
-    # Run daily at 9 AM UTC
-    - cron: "0 9 * * *"
+  workflow_dispatch:
 
 jobs:
   periodic_update:
@@ -206,6 +187,13 @@ jobs:
     with:
       trigger-periodic-issues-updates: true
 ```
+
+**Note**: Instead of using GitHub Actions' `schedule` clause (which has limitations and inefficiencies), this workflow is designed to be triggered remotely via `workflow_dispatch`. You can use external schedulers like:
+
+- **AWS Lambda with EventBridge cron**: Create a Lambda function triggered by an EventBridge cron rule that calls the GitHub API to trigger `workflow_dispatch`
+- **Any scheduled job service**: Any service capable of making HTTP requests can trigger the workflow via GitHub's workflow dispatch API
+
+This approach provides better reliability, more flexible scheduling, and avoids the limitations of GitHub Actions' schedule triggers.
 
 ### Complete Example: Real-time Events + Manual Trigger
 
@@ -299,7 +287,7 @@ Trigger Reason: The workflow was triggered by an | issues | event with action | 
 
 #### Discord Message Example:
 
-**Note:** The script filters out closed issues from the detailed display and only shows open issues. A summary count of closed issues is included at the end.
+**Note:** The script filters out closed issues from the detailed display and only shows open issues. Messages are sent in batches of 3 issues per message. A final summary message includes clickable links to both open and closed issue counts.
 
 ```
 ---
@@ -313,10 +301,10 @@ __Issue State__: `open`
 __Created By__: `username`
 __Issue Created At__: `2024-01-15T10:30:00Z`
 __Issue Last Update__: `2024-01-15T12:00:00Z`
-## [Issue Link](https://github.com/owner/repo/issues/1)
 
 
-__Total Closed Issues__: `5`
+[__Total Open Issues__](https://github.com/owner/repo/issues?q=is%3Aissue%20state%3Aopen): `3`
+[__Total Closed Issues__](https://github.com/owner/repo/issues?q=is%3Aissue%20state%3Aclosed): `5`
 ---------------------------------------------------
 ```
 
@@ -334,11 +322,12 @@ __Total Closed Issues__: `5`
 - **Python Setup**: Uses `actions/setup-python@v5` to configure Python 3.11 environment
 - **API Endpoint**: `GET /repos/{owner}/{repo}/issues?state=all` (includes both open and closed issues)
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
-- **Output**: Saves all issues (open and closed) as JSON to `issues.json` file
-- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
-  - The script reads `issues.json`, filters out closed issues from the detailed display, and writes the formatted message to `GITHUB_OUTPUT`
-  - The formatted message includes a date header, detailed information for open issues (numbers, titles, states, creators, timestamps, and links), and a summary footer with the total count of closed issues
-- **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
+- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) to fetch, format issues, and send Discord messages
+  - The script fetches all issues directly from the GitHub API with automatic pagination support (handles repositories with any number of issues)
+  - Filters out closed issues from the detailed display and sends messages directly to Discord
+  - Messages are sent in batches of 3 issues per message to avoid Discord message length limits
+  - The formatted messages include a date header, detailed information for open issues (numbers, titles, states, creators, timestamps), and a final summary message with total counts of both open and closed issues as clickable links
+- **Discord Integration**: The Python script sends messages directly to Discord using `httpx` library via the `DISCORD_WEBHOOK_URL` environment variable
 - **Runner**: Uses `ubuntu-latest` runner
 - **Conditional Execution**: **Job only runs when** `trigger-periodic-issues-updates` input is set to `true` **AND** the job's `if` condition evaluates to true. If either condition is false, the job will be skipped.
 
@@ -346,13 +335,15 @@ __Total Closed Issues__: `5`
 
 This workflow uses assets from the `workflow_assets/` directory:
 
-- **periodic_issues_notification_format.py**: A Python script that processes GitHub issues JSON data and formats it into a Discord-compatible markdown message. The script:
-  - Parses the `issues.json` file created by the "Get all issues" step
+- **periodic_issues_notification.py**: A Python script that fetches GitHub issues via API, formats them into Discord-compatible markdown messages, and sends them directly to Discord. The script:
+  - Fetches all issues directly from the GitHub API with automatic pagination (handles any number of issues by fetching up to 100 per page and continuing until all are retrieved)
   - Filters closed issues from the detailed display (only open issues are shown with full details)
-  - Counts closed issues separately and includes a summary count at the end
-  - Formats each open issue with structured markdown (headers, metadata, links)
+  - Counts both open and closed issues separately
+  - Formats each open issue with structured markdown (headers, metadata)
   - Generates a timestamped header for the notification
-  - Outputs the formatted message to `GITHUB_OUTPUT` for use in subsequent workflow steps
+  - Sends messages in batches of 3 issues per message to avoid Discord message length limits
+  - Sends a final summary message with total open and closed issue counts as clickable links
+  - Sends messages directly to Discord using `httpx` library via `DISCORD_WEBHOOK_URL` environment variable
   - Handles UTF-8 encoding to support international characters
 
 The workflow checks out the repository where it's defined (not the calling repository) to access this script, ensuring the asset is available during workflow execution.
