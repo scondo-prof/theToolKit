@@ -173,15 +173,13 @@ jobs:
 
 ### Periodic Updates
 
-To use the workflow for periodic issue updates, call it from a scheduled workflow:
+To use the workflow for periodic issue updates, set up `workflow_dispatch` in your workflow and trigger it externally (e.g., via AWS Lambda with EventBridge cron, or any scheduled job service):
 
 ```yaml
 name: Daily Issues Update
 
 on:
-  schedule:
-    # Run daily at 9 AM UTC
-    - cron: "0 9 * * *"
+  workflow_dispatch:
 
 jobs:
   periodic_update:
@@ -189,6 +187,13 @@ jobs:
     with:
       trigger-periodic-issues-updates: true
 ```
+
+**Note**: Instead of using GitHub Actions' `schedule` clause (which has limitations and inefficiencies), this workflow is designed to be triggered remotely via `workflow_dispatch`. You can use external schedulers like:
+
+- **AWS Lambda with EventBridge cron**: Create a Lambda function triggered by an EventBridge cron rule that calls the GitHub API to trigger `workflow_dispatch`
+- **Any scheduled job service**: Any service capable of making HTTP requests can trigger the workflow via GitHub's workflow dispatch API
+
+This approach provides better reliability, more flexible scheduling, and avoids the limitations of GitHub Actions' schedule triggers.
 
 ### Complete Example: Real-time Events + Manual Trigger
 
