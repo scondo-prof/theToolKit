@@ -63,6 +63,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: .github/workflows/workflow_assets/periodic_issues_notification_requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r .github/workflows/workflow_assets/periodic_issues_notification_requirements.txt
 
       - name: Get all issues
         id: get_all_issues

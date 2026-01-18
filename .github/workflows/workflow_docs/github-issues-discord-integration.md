@@ -124,7 +124,7 @@ Sends the formatted message to Discord:
 
 - A Discord webhook URL configured as a repository secret named `DISCORD_WEBHOOK_URL` (required for jobs that send Discord notifications)
 - The workflow must be called from a repository that has GitHub Actions enabled
-- **For Periodic Updates**: The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) must exist in the repository where the workflow is defined (the repository containing the reusable workflow, not the calling repository)
+- **For Periodic Updates**: The Python formatting script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) must exist in the repository where the workflow is defined (the repository containing the reusable workflow, not the calling repository)
   - The workflow checks out the repository containing the workflow definition to access this script
   - The script is part of the `workflow_assets/` directory, which contains supporting files for workflows
 - `GITHUB_TOKEN` must have appropriate permissions to read repository issues
@@ -335,8 +335,8 @@ __Total Closed Issues__: `5`
 - **API Endpoint**: `GET /repos/{owner}/{repo}/issues?state=all` (includes both open and closed issues)
 - **Authentication**: Uses `secrets.GITHUB_TOKEN` (automatically provided by GitHub Actions)
 - **Output**: Saves all issues (open and closed) as JSON to `issues.json` file
-- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification_format.py`) to format issues into Discord markdown
-  - The script reads `issues.json`, filters out closed issues from the detailed display, and writes the formatted message to `GITHUB_OUTPUT`
+- **Processing**: Uses Python script (`.github/workflows/workflow_assets/periodic_issues_notification.py`) to format issues into Discord markdown
+  - The script reads the issues JSON file (defaults to `issues.json` but accepts a configurable path via the `issues_file_path` parameter), filters out closed issues from the detailed display, and writes the formatted message to `GITHUB_OUTPUT`
   - The formatted message includes a date header, detailed information for open issues (numbers, titles, states, creators, timestamps, and links), and a summary footer with the total count of closed issues
 - **Discord Integration**: Uses `tsickert/discord-webhook@v7.0.0` action for sending formatted messages
 - **Runner**: Uses `ubuntu-latest` runner
@@ -346,8 +346,8 @@ __Total Closed Issues__: `5`
 
 This workflow uses assets from the `workflow_assets/` directory:
 
-- **periodic_issues_notification_format.py**: A Python script that processes GitHub issues JSON data and formats it into a Discord-compatible markdown message. The script:
-  - Parses the `issues.json` file created by the "Get all issues" step
+- **periodic_issues_notification.py**: A Python script that processes GitHub issues JSON data and formats it into a Discord-compatible markdown message. The script:
+  - Parses the issues JSON file (defaults to `issues.json`, but accepts a configurable path via the `issues_file_path` parameter) created by the "Get all issues" step
   - Filters closed issues from the detailed display (only open issues are shown with full details)
   - Counts closed issues separately and includes a summary count at the end
   - Formats each open issue with structured markdown (headers, metadata, links)
