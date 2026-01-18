@@ -78,6 +78,8 @@ jobs:
 
       - name: Create Discord Notification from issues.json
         id: create_discord_notification
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python3 .github/workflows/workflow_assets/periodic_issues_notification.py
 

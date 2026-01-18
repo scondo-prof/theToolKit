@@ -5,7 +5,7 @@ import os
 import httpx
 
 
-def format_discord_message(issues_file_path: str = "issues.json") -> str:
+def format_discord_message(issues_file_path: str = "issues.json", github_repository: str | None = None) -> str:
     """Format GitHub issues data into a Discord message string.
 
     Reads issues from a JSON file and formats them into a Discord-compatible
@@ -23,6 +23,10 @@ def format_discord_message(issues_file_path: str = "issues.json") -> str:
             - 'created_at': ISO format creation timestamp
             - 'updated_at': ISO format last update timestamp
             - 'html_url': URL to the issue on GitHub
+        github_repository: GitHub repository in the format "owner/repo" (e.g.,
+            "scondo-prof/the_ticketing_system"). If None, attempts to read from
+            the GITHUB_REPOSITORY environment variable. If not available,
+            defaults to an empty string (link will be omitted).
 
     Returns:
         str: Formatted Discord message containing:
@@ -32,13 +36,19 @@ def format_discord_message(issues_file_path: str = "issues.json") -> str:
 
     Note:
         Only open issues (state != 'closed') are included in the message body.
-        Closed issues are only counted for the summary.
+        Closed issues are only counted for the summary. The "Total Closed Issues"
+        text is a clickable link that navigates to the repository's closed issues
+        page on GitHub.
     """
 
     discord_message: str = f"""---
     # _Issues as of {datetime.now().strftime('%Y-%m-%d')}_
     ---------------------------------------------------
     """
+
+    # Get GitHub repository from parameter or environment variable
+    if github_repository is None:
+        github_repository = os.getenv("GITHUB_REPOSITORY", "")
 
     # Issu Data Source
     with open(issues_file_path, "r", encoding="utf-8") as issues_file:
@@ -62,7 +72,7 @@ __Issue Last Update__: `{issue['updated_at']}`
 
     discord_message += f"""
 
-__Total Closed Issues__: `{total_closed_issues}`
+[__Total Closed Issues__](https://github.com/{github_repository}/issues?q=is%3Aissue%20state%3Aclosed): `{total_closed_issues}`
 ---------------------------------------------------
 """
     return discord_message

@@ -316,7 +316,7 @@ __Issue Last Update__: `2024-01-15T12:00:00Z`
 ## [Issue Link](https://github.com/owner/repo/issues/1)
 
 
-__Total Closed Issues__: `5`
+[__Total Closed Issues__](https://github.com/owner/repo/issues?q=is%3Aissue%20state%3Aclosed): `5`
 ---------------------------------------------------
 ```
 
