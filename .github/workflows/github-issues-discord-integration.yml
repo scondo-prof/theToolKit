@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: scondo-prof/theToolKit
-          ref: 5-periodoic-issues-discord-fix
+          ref: 5-periodoic-issues-discord-fix # TODO: Change this to main once the fix is merged
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -76,10 +76,11 @@ jobs:
           echo "Getting all issues"
           curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues?state=all" | jq '.' > issues.json
 
-      - name: Create Discord Notification from issues.json
+      - name: Format and Send Discord Notification from issues.json
         id: create_discord_notification
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python3 .github/workflows/workflow_assets/periodic_issues_notification.py
 
