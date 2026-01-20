@@ -6,7 +6,7 @@ variable "s3_backend_bucket" {
 variable "s3_backend_key" {
   type        = string
   description = "The key to store the Terraform state in the S3 bucket."
-  default     = "eventbridge_trigger_ecr_container_lambda.tfstate"
+  default     = "eventbridge_schedule_ecr_container_lambda.tfstate"
 }
 
 variable "aws_region" {

@@ -1,4 +1,4 @@
-# EventBridge Triggers GitHub Actions Workflow Lambda
+# EventBridge Schedules GitHub Actions Workflow Lambda
 
 AWS Lambda function that handles events from Amazon EventBridge and triggers GitHub Actions workflow_dispatch events using the GitHub REST API.
 
@@ -21,7 +21,7 @@ This Lambda function is designed to be triggered by Amazon EventBridge events. W
 The Lambda function is structured as follows:
 
 ```
-eventbridge_triggers_github_actions_web_request/
+eventbridge_schedules_github_actions_web_request/
 ├── main.py              # Main Lambda handler function
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile          # Docker image definition
@@ -110,7 +110,7 @@ python main.py
 Build the Docker image for deployment:
 
 ```bash
-docker build -t eventbridge-triggers-web-request .
+docker build -t eventbridge-schedules-web-request .
 ```
 
 ### Deployment
@@ -193,7 +193,7 @@ This module handles:
 
 #### Optional Variables
 
-- **`s3_backend_key`**: The S3 key for storing Terraform state (default: `eventbridge_trigger_ecr_container_lambda.tfstate`)
+- **`s3_backend_key`**: The S3 key for storing Terraform state (default: `eventbridge_schedule_ecr_container_lambda.tfstate`)
 - **`aws_region`**: The AWS region to deploy resources to (default: `us-east-1`)
 
 ### Terraform Backend Configuration
