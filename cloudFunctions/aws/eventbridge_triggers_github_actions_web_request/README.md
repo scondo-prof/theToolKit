@@ -21,11 +21,18 @@ This Lambda function is designed to be triggered by Amazon EventBridge events. W
 The Lambda function is structured as follows:
 
 ```
-eventbridge_triggers_web_request/
+eventbridge_triggers_github_actions_web_request/
 ├── main.py              # Main Lambda handler function
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile          # Docker image definition
-└── README.md           # This file
+├── README.md           # This file
+└── terraform/          # Terraform infrastructure as code
+    ├── main.tf         # Main Terraform configuration
+    ├── variables.tf    # Variable definitions
+    ├── outputs.tf      # Output definitions
+    └── config/         # Configuration files
+        ├── test.tfvars              # Test environment variables
+        └── test-backend.tfvars      # Test backend configuration
 ```
 
 ## Handler Function
@@ -108,11 +115,118 @@ docker build -t eventbridge-triggers-web-request .
 
 ### Deployment
 
-Deploy this Lambda function using the Docker image:
+Deploy this Lambda function using Terraform infrastructure as code:
+
+#### Terraform Deployment
+
+The project uses Terraform to deploy the Lambda function and associated EventBridge resources:
+
+1. **Configure Backend**: Set up the S3 backend configuration in `terraform/config/test-backend.tfvars`:
+   ```hcl
+   bucket = "your-terraform-state-bucket"
+   ```
+
+2. **Configure Variables**: Set up environment variables in `terraform/config/test.tfvars`:
+   ```hcl
+   project = "gh-issues"
+   ```
+
+3. **Initialize Terraform**:
+   ```bash
+   cd terraform
+   terraform init -backend-config=config/test-backend.tfvars
+   ```
+
+4. **Plan Deployment**:
+   ```bash
+   terraform plan -var-file=config/test.tfvars \
+     -var="s3_backend_bucket=your-bucket" \
+     -var="environment=test" \
+     -var="owner=your-name"
+   ```
+
+5. **Apply Configuration**:
+   ```bash
+   terraform apply -var-file=config/test.tfvars \
+     -var="s3_backend_bucket=your-bucket" \
+     -var="environment=test" \
+     -var="owner=your-name"
+   ```
+
+#### Manual Deployment
+
+Alternatively, deploy manually using the Docker image:
 
 1. Push the image to Amazon ECR
 2. Create or update the Lambda function to use the container image
 3. Configure EventBridge to trigger the Lambda function
+
+## Infrastructure as Code (Terraform)
+
+This project uses Terraform to manage the AWS infrastructure. The Terraform configuration uses a reusable module for EventBridge-scheduled Lambda functions.
+
+### Terraform Module
+
+The configuration uses the `eventbridge_schedule_ecr_container_lambda` module from the `useful-iac` repository:
+
+```hcl
+module "eventbridge_schedule_ecr_container_lambda" {
+  source = "git::https://github.com/your-org/useful-iac.git//eventbridge_schedule_ecr_container_lambda?ref=7-eventbridge-ecr-lambda"
+}
+```
+
+This module handles:
+- Lambda function creation with ECR container image
+- EventBridge rule configuration
+- IAM roles and permissions
+- CloudWatch Logs configuration
+- Tagging and resource naming
+
+### Terraform Variables
+
+#### Required Variables
+
+- **`s3_backend_bucket`**: The S3 bucket name for storing Terraform state
+- **`environment`**: The deployment environment (e.g., `test`, `staging`, `production`)
+- **`project`**: The project name (used for resource naming and tagging)
+- **`owner`**: The owner of the resources (used for tagging)
+
+#### Optional Variables
+
+- **`s3_backend_key`**: The S3 key for storing Terraform state (default: `eventbridge_trigger_ecr_container_lambda.tfstate`)
+- **`aws_region`**: The AWS region to deploy resources to (default: `us-east-1`)
+
+### Terraform Backend Configuration
+
+The Terraform state is stored in an S3 backend. Configure the backend in `terraform/config/test-backend.tfvars`:
+
+```hcl
+bucket = "your-terraform-state-bucket"
+```
+
+The backend configuration dynamically constructs the state file path:
+```
+${var.project}/${var.environment}/${var.s3_backend_key}.tfstate
+```
+
+### Terraform Provider Configuration
+
+The AWS provider is configured with default tags that are applied to all resources:
+
+```hcl
+default_tags {
+  tags = {
+    Environment = var.environment
+    Project     = var.project
+    Owner       = var.owner
+  }
+}
+```
+
+### Configuration Files
+
+- **`terraform/config/test.tfvars`**: Test environment variable values
+- **`terraform/config/test-backend.tfvars`**: Backend configuration for test environment
 
 ## Configuration
 
@@ -120,13 +234,19 @@ Deploy this Lambda function using the Docker image:
 
 Configure an EventBridge rule to trigger this Lambda function:
 
-1. Create an EventBridge rule with your desired event pattern
-2. Set the target to this Lambda function
-3. Ensure the Lambda function has the necessary permissions to be invoked by EventBridge
+1. Create an EventBridge rule with your desired event pattern (handled by Terraform module)
+2. Set the target to this Lambda function (handled by Terraform module)
+3. Ensure the Lambda function has the necessary permissions to be invoked by EventBridge (handled by Terraform module)
 
 ### Lambda Permissions
 
-The Lambda function needs permission to be invoked by EventBridge. Ensure the function's resource-based policy includes:
+The Lambda function needs permission to be invoked by EventBridge. The Terraform module automatically configures:
+
+- Lambda resource-based policy to allow EventBridge invocations
+- EventBridge rule target configuration
+- IAM roles and policies for Lambda execution
+
+If deploying manually, ensure the function's resource-based policy includes:
 
 ```json
 {
@@ -204,10 +324,25 @@ Monitor the function's execution through:
 
 ## Requirements
 
+### Runtime Requirements
+
 - Python 3.12
 - Docker (for containerized deployment)
 - AWS CLI configured (for deployment)
 - EventBridge rule configured to trigger the function
+
+### Infrastructure Requirements
+
+- **Terraform** >= 1.0.0
+- **AWS Provider** ~> 6.0
+- **S3 Backend**: An S3 bucket for storing Terraform state
+- **Terraform Module Access**: Access to the `useful-iac` repository containing the `eventbridge_schedule_ecr_container_lambda` module
+- **AWS Credentials**: Configured AWS credentials with permissions to create:
+  - Lambda functions
+  - EventBridge rules
+  - IAM roles and policies
+  - CloudWatch Log Groups
+  - ECR repositories (if pushing Docker images)
 
 ## Related Documentation
 
