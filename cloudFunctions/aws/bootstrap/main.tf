@@ -22,7 +22,7 @@ provider "aws" {
 }
 
 module "aws_bootstrap" {
-  source = "git::https://github.com/scondo-prof/useful-iac.git//aws_bootstrap?ref=16-bootstrap-ecr-module"
+  source = "git::https://github.com/scondo-prof/useful-iac.git//aws_bootstrap?ref=main"
 
   environment              = var.environment
   project                  = var.project
