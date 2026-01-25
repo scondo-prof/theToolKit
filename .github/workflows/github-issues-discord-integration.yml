@@ -58,25 +58,19 @@ jobs:
         with:
           repository: scondo-prof/theToolKit
           ref: main
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Get all issues
-        id: get_all_issues
+          cache: "pip"
+          cache-dependency-path: .github/workflows/workflow_assets/periodic_issues_notification_requirements.txt
+      - name: Install dependencies
         run: |
-          echo "Getting all issues"
-          curl -X GET -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues?state=all" | jq '.' > issues.json
-
-      - name: Create Discord Notification from issues.json
-        id: create_discord_notification
+          pip install -r .github/workflows/workflow_assets/periodic_issues_notification_requirements.txt
+      - name: Format and Send Discord Notification from GitHub Issues
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 .github/workflows/workflow_assets/periodic_issues_notification_format.py
-
-      - name: Send to Discord
-        uses: tsickert/discord-webhook@v7.0.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          content: ${{ steps.create_discord_notification.outputs.discord_message }}
+          python3 .github/workflows/workflow_assets/periodic_issues_notification.py
