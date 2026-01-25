@@ -19,7 +19,7 @@ Other Terraform configs (e.g. Lambda, EventBridge) depend on these ECR repositor
 bootstrap/
 ├── main.tf           # Provider, backend, and aws_bootstrap module
 ├── variables.tf      # Input variables
-├── outputs.tf        # ECR URLs, ARNs, and names
+├── outputs.tf        # Cloud-functions ECR URL, ARN, and name
 ├── README.md         # This file
 └── config/
     ├── utils.tfvars         # Example variable values
@@ -77,11 +77,13 @@ Backend (`bucket`, `key`, `region`) is configured via `-backend-config` only, no
 
 ## Outputs
 
+This bootstrap exposes a single ECR repository (the first in `ecr_repository_names`), intended for the shared cloud-functions image:
+
 | Output | Description |
 |--------|-------------|
-| `ecr_repository_urls` | ECR repository URLs (for `docker push`, etc.). |
-| `ecr_repository_arns` | ECR repository ARNs. |
-| `ecr_repository_names` | ECR repository names. |
+| `cloud_functions_ecr_repository_url` | ECR repository URL for the cloud-functions repo (e.g. for `docker push`). |
+| `cloud_functions_ecr_repository_arn` | ECR repository ARN for the cloud-functions repo. |
+| `cloud_functions_ecr_repository_name` | ECR repository name for the cloud-functions repo. |
 
 ## Requirements
 
