@@ -30,14 +30,13 @@ bootstrap/
 
 ### 1. Backend configuration
 
-Use `config/utils-backend.tfvars` (or your own backend file) to set the S3 backend:
+The S3 backend is declared as `backend "s3" {}` in `main.tf`. Config is supplied via `-backend-config` (e.g. `config/utils-backend.tfvars`). Use backend attributes, not Terraform variables:
 
 ```hcl
-s3_backend_bucket = "your-terraform-state-bucket"
-s3_backend_key    = "bootstrap.tfstate"
+bucket = "your-terraform-state-bucket"
+key    = "utils/root/bootstrap.tfstate"   # or your chosen path
+region = "us-east-1"
 ```
-
-State path used by the backend: `{project}/{environment}/{s3_backend_key}.tfstate`
 
 ### 2. Variable configuration
 
@@ -57,30 +56,24 @@ ecr_repository_names = ["cloud-functions"]
 cd cloudFunctions/aws/bootstrap
 
 terraform init -backend-config=config/utils-backend.tfvars
-terraform plan -var-file=config/utils.tfvars \
-  -var="s3_backend_bucket=your-bucket" \
-  -var="s3_backend_key=bootstrap.tfstate" \
-  -var="owner=your-name"
-terraform apply -var-file=config/utils.tfvars \
-  -var="s3_backend_bucket=your-bucket" \
-  -var="s3_backend_key=bootstrap.tfstate" \
-  -var="owner=your-name"
+terraform plan -var-file=config/utils.tfvars
+terraform apply -var-file=config/utils.tfvars
 ```
 
-Adjust `-var` and `-var-file` to match your backend and environment.
+Use your own `-backend-config` and `-var-file` as needed. Backend settings are only in the backend config file; plan/apply use tfvars for root module variables.
 
 ## Variables
 
 | Variable | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `s3_backend_bucket` | string | yes | — | S3 bucket for Terraform state. |
-| `s3_backend_key` | string | yes | — | S3 object key for state file. |
 | `project` | string | yes | — | Project name; used for naming and tags. |
 | `environment` | string | yes | — | Environment (e.g. `dev`, `staging`, `root`). |
 | `owner` | string | yes | — | Owner; used for tagging. |
 | `aws_region` | string | no | `us-east-1` | AWS region for bootstrap resources. |
 | `ecr_image_tag_mutability` | string | no | `MUTABLE` | `MUTABLE` or `IMMUTABLE` for ECR image tags. |
 | `ecr_repository_names` | list(string) | no | `[]` | ECR repository names. Prefixed with `{environment}-{project}-`. |
+
+Backend (`bucket`, `key`, `region`) is configured via `-backend-config` only, not via variables.
 
 ## Outputs
 

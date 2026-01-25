@@ -1,2 +1,3 @@
-s3_backend_bucket = "scondo-iac-bucket"
-s3_backend_key    = "bootstrap.tfstate"
+bucket = "scondo-iac-bucket"
+key    = "utils/root/bootstrap.tfstate"
+region = "us-east-1"

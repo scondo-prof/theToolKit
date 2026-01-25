@@ -1,13 +1,3 @@
-variable "s3_backend_bucket" {
-  type        = string
-  description = "The S3 bucket to store the Terraform state."
-}
-
-variable "s3_backend_key" {
-  type        = string
-  description = "The S3 key to store the Terraform state."
-}
-
 variable "project" {
   type        = string
   description = "The project name. Used for resource naming and tagging."

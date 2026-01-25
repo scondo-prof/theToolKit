@@ -6,11 +6,7 @@ terraform {
     }
   }
   required_version = ">= 1.0.0"
-  backend "s3" {
-    bucket = var.s3_backend_bucket
-    key    = "${var.project}/${var.environment}/${var.s3_backend_key}.tfstate"
-    region = var.aws_region
-  }
+  backend "s3" {}
 }
 
 # Configure the AWS Provider
@@ -31,5 +27,5 @@ module "aws_bootstrap" {
   environment              = var.environment
   project                  = var.project
   ecr_image_tag_mutability = var.ecr_image_tag_mutability
-  ecr_repository_names     = var.ecr_repository_names
+  ecr_repository_names      = var.ecr_repository_names
 }
