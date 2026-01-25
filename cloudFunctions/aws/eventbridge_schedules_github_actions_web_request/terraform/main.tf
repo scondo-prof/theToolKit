@@ -6,11 +6,7 @@ terraform {
     }
   }
   required_version = ">= 1.0.0"
-  backend "s3" {
-    bucket = var.s3_backend_bucket
-    key    = "${var.project}/${var.environment}/${var.s3_backend_key}.tfstate"
-    region = var.aws_region
-  }
+  backend "s3" {}
 }
 
 # Configure the AWS Provider

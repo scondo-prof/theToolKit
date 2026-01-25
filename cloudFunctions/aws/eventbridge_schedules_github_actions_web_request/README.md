@@ -31,8 +31,8 @@ eventbridge_schedules_github_actions_web_request/
     ├── variables.tf    # Variable definitions
     ├── outputs.tf      # Output definitions
     └── config/         # Configuration files
-        ├── test.tfvars              # Test environment variables
-        └── test-backend.tfvars      # Test backend configuration
+        ├── utils.tfvars         # Variable values (project, environment, owner)
+        └── utils-backend.tfvars # S3 backend configuration
 ```
 
 ## Handler Function
@@ -119,38 +119,32 @@ Deploy this Lambda function using Terraform infrastructure as code:
 
 #### Terraform Deployment
 
-The project uses Terraform to deploy the Lambda function and associated EventBridge resources:
+The project uses Terraform to deploy the Lambda function and associated EventBridge resources. The S3 backend is declared as `backend "s3" {}`; config is supplied via `-backend-config`.
 
-1. **Configure Backend**: Set up the S3 backend configuration in `terraform/config/test-backend.tfvars`:
+1. **Configure Backend**: Set up `terraform/config/utils-backend.tfvars` with backend attributes:
    ```hcl
    bucket = "your-terraform-state-bucket"
+   key    = "utils/root/eventbridge_schedules_github_actions_web_request.tfstate"
+   region = "us-east-1"
    ```
 
-2. **Configure Variables**: Set up environment variables in `terraform/config/test.tfvars`:
+2. **Configure Variables**: Set up `terraform/config/utils.tfvars`:
    ```hcl
-   project = "gh-issues"
+   project     = "gh-issues"
+   environment = "root"
+   owner       = "scondo-prof"
    ```
 
 3. **Initialize Terraform**:
    ```bash
    cd terraform
-   terraform init -backend-config=config/test-backend.tfvars
+   terraform init -backend-config=config/utils-backend.tfvars
    ```
 
-4. **Plan Deployment**:
+4. **Plan and Apply**:
    ```bash
-   terraform plan -var-file=config/test.tfvars \
-     -var="s3_backend_bucket=your-bucket" \
-     -var="environment=test" \
-     -var="owner=your-name"
-   ```
-
-5. **Apply Configuration**:
-   ```bash
-   terraform apply -var-file=config/test.tfvars \
-     -var="s3_backend_bucket=your-bucket" \
-     -var="environment=test" \
-     -var="owner=your-name"
+   terraform plan -var-file=config/utils.tfvars
+   terraform apply -var-file=config/utils.tfvars
    ```
 
 #### Manual Deployment
@@ -186,27 +180,24 @@ This module handles:
 
 #### Required Variables
 
-- **`s3_backend_bucket`**: The S3 bucket name for storing Terraform state
-- **`environment`**: The deployment environment (e.g., `test`, `staging`, `production`)
 - **`project`**: The project name (used for resource naming and tagging)
+- **`environment`**: The deployment environment (e.g., `root`, `test`, `staging`, `production`)
 - **`owner`**: The owner of the resources (used for tagging)
 
 #### Optional Variables
 
-- **`s3_backend_key`**: The S3 key for storing Terraform state (default: `eventbridge_schedule_ecr_container_lambda.tfstate`)
 - **`aws_region`**: The AWS region to deploy resources to (default: `us-east-1`)
+
+Backend (`bucket`, `key`, `region`) is configured via `-backend-config` only, not via variables.
 
 ### Terraform Backend Configuration
 
-The Terraform state is stored in an S3 backend. Configure the backend in `terraform/config/test-backend.tfvars`:
+The S3 backend is declared as `backend "s3" {}` in `main.tf`. Configure it via `-backend-config` (e.g. `config/utils-backend.tfvars`) using backend attributes:
 
 ```hcl
 bucket = "your-terraform-state-bucket"
-```
-
-The backend configuration dynamically constructs the state file path:
-```
-${var.project}/${var.environment}/${var.s3_backend_key}.tfstate
+key    = "utils/root/eventbridge_schedules_github_actions_web_request.tfstate"
+region = "us-east-1"
 ```
 
 ### Terraform Provider Configuration
@@ -225,8 +216,8 @@ default_tags {
 
 ### Configuration Files
 
-- **`terraform/config/test.tfvars`**: Test environment variable values
-- **`terraform/config/test-backend.tfvars`**: Backend configuration for test environment
+- **`terraform/config/utils.tfvars`**: Variable values (project, environment, owner)
+- **`terraform/config/utils-backend.tfvars`**: S3 backend configuration (bucket, key, region)
 
 ## Configuration
 

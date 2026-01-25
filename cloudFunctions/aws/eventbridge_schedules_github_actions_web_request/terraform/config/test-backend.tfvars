@@ -1,1 +1,0 @@
-bucket = "scondo-iac-bucket"
