@@ -37,7 +37,7 @@ eventbridge_schedules_github_actions_web_request/
 
 ## Handler Function
 
-The main handler function receives EventBridge events and triggers GitHub Actions workflows:
+The main handler function receives EventBridge events and triggers GitHub Actions workflows. On each invocation it first calls `load_secrets_manager_environment_variables()` to load configuration from the secret identified by `SECRET_ARN` into the environment, then reads GitHub and workflow settings from env vars and triggers the workflow:
 
 ```python
 def main(event: dict, context: dict) -> dict:
@@ -69,12 +69,12 @@ def trigger_github_workflow_dispatch(
 
 ## Dependencies
 
-The function uses `httpx` for making HTTP requests. Key dependencies include:
+The function uses:
 
-- `httpx` - Modern HTTP client library for Python
-- Supporting libraries: `httpcore`, `certifi`, `anyio`, `idna`, `h11`
+- **`httpx`** – HTTP client for calling the GitHub REST API
+- **`boto3`** – AWS SDK for reading secrets from AWS Secrets Manager in `load_secrets_manager_environment_variables()`
 
-See `requirements.txt` for the complete list of dependencies.
+See `requirements.txt` for the full dependency list.
 
 ## EventBridge Event Format
 
@@ -183,6 +183,7 @@ This module handles:
 - **`project`**: The project name (used for resource naming and tagging)
 - **`environment`**: The deployment environment (e.g., `root`, `test`, `staging`, `production`)
 - **`owner`**: The owner of the resources (used for tagging)
+- **`name_prefix`**: Prefix for Lambda and related resource names (e.g., `gh-actions-web-request`)
 
 #### Optional Variables
 
@@ -288,10 +289,11 @@ The function uses synchronous `httpx.post()` which is ideal for single HTTP requ
 
 ## Environment Variables
 
-Configure these environment variables in the Lambda function settings:
+Configure these environment variables in the Lambda function settings (or via Terraform `environment_variables` / `lambda_secret_variables`).
 
 ### Required:
-- **GITHUB_TOKEN**: GitHub Personal Access Token with `actions:write` permission
+- **SECRET_ARN**: ARN of the AWS Secrets Manager secret containing runtime configuration. The secret must be a JSON object whose keys are environment variable names and values are the variable values (e.g. `{"GITHUB_TOKEN": "ghp_..."}`). The handler calls `load_secrets_manager_environment_variables()` at startup to load these into `os.environ`.
+- **GITHUB_TOKEN**: GitHub Personal Access Token with `actions:write` permission (typically stored in the secret above)
   - Create at: GitHub Settings → Developer settings → Personal access tokens
   - Required scope: `actions:write` to trigger workflows
 
@@ -300,6 +302,10 @@ Configure these environment variables in the Lambda function settings:
 - **GITHUB_REPO**: Repository name (default: `the_ticketing_system`)
 - **GITHUB_WORKFLOW**: Workflow file name (default: `github-issues-discord-integration.yml`)
 - **GITHUB_BRANCH**: Branch or tag to trigger from (default: `main`)
+
+### Secrets Manager Loading
+
+The handler calls `load_secrets_manager_environment_variables()` at the start of each invocation. It reads the secret identified by `SECRET_ARN`, parses it as JSON, and sets each key-value pair as an environment variable. This allows sensitive values (e.g. `GITHUB_TOKEN`) to be stored in Secrets Manager and injected at runtime without embedding them in Terraform or the container image.
 
 ## Logging
 

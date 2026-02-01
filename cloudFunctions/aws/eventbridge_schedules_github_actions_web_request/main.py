@@ -1,5 +1,26 @@
 import httpx
+import json
 import os
+
+import boto3
+
+
+sm = boto3.client("secretsmanager")
+
+
+def load_secrets_manager_environment_variables() -> bool:
+    try:
+        print("Loading secrets manager environment variables")
+        secret_variables: dict[str, str] = json.loads(
+            sm.get_secret_value(SecretId=os.getenv("SECRET_ARN"))["SecretString"]
+        )
+        for secret_variable in secret_variables:
+            os.environ[secret_variable] = secret_variables[secret_variable]
+        print("Secrets manager environment variables loaded")
+        return True
+    except Exception as e:
+        print(f"Error loading secrets manager environment variables: {e}")
+        return False
 
 
 def trigger_github_workflow_dispatch(
@@ -92,6 +113,8 @@ def main(event: dict, context: dict) -> dict:
             - statusCode (int): HTTP status code (200, 400, or from GitHub API)
             - body (dict): Response body containing the result from trigger_github_workflow_dispatch()
     """
+    print("Starting Lambda function")
+    load_secrets_manager_environment_variables()
     print(f"Received EventBridge event: {event}")
     print(f"Lambda context: {context}")
     github_token: str = os.environ.get("GITHUB_TOKEN")
