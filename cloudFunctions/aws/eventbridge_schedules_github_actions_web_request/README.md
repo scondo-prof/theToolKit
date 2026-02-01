@@ -219,6 +219,36 @@ default_tags {
 }
 ```
 
+### Terraform Outputs
+
+The configuration exposes outputs from the module and from the bootstrap remote state:
+
+**Bootstrap (from `terraform_remote_state`):**
+
+| Output | Description |
+|--------|-------------|
+| `bootstrap_cloud_functions_ecr_repository_url` | ECR repository URL from bootstrap (cloud-functions image). |
+| `bootstrap_cloud_functions_ecr_repository_arn` | ECR repository ARN from bootstrap. |
+| `bootstrap_cloud_functions_ecr_repository_name` | ECR repository name from bootstrap. |
+
+**Lambda module:**
+
+| Output | Description |
+|--------|-------------|
+| `lambda_function_name` | Name of the Lambda function. |
+| `lambda_function_arn` | ARN of the Lambda function. |
+| `lambda_function_invoke_arn` | Invoke ARN (e.g. for API Gateway). |
+| `lambda_function_qualified_arn` | Qualified ARN (with version). |
+| `lambda_function_version` | Lambda version. |
+| `lambda_secret_arn` | ARN of the Secrets Manager secret. |
+| `lambda_secret_name` | Name of the Secrets Manager secret. |
+| `lambda_role_arn` | ARN of the IAM role. |
+| `lambda_role_name` | Name of the IAM role. |
+| `lambda_log_group_name` | CloudWatch log group name. |
+| `lambda_log_group_arn` | CloudWatch log group ARN. |
+| `eventbridge_rule_arn` | ARN of the EventBridge rule. |
+| `eventbridge_rule_name` | Name of the EventBridge rule. |
+
 ### Configuration Files
 
 - **`terraform/config/utils.tfvars`**: Non-sensitive variable values only (project, environment, owner, name_prefix, bootstrap state bucket/key, lambda_event_rule_cron, ecr_image_tag). Do not put secret values here.
