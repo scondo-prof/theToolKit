@@ -22,7 +22,7 @@ provider "aws" {
 }
 
 module "aws_bootstrap" {
-  source = "git::https://github.com/scondo-prof/useful-iac.git//aws_bootstrap?ref=main"
+  source = "git::https://github.com/scondo-prof/useful-iac.git//aws_bootstrap?ref=bootstrap-v1.0.0"
 
   environment              = var.environment
   project                  = var.project
