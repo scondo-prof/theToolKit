@@ -2,7 +2,7 @@
 
 Terraform configuration that bootstraps foundational AWS resources for cloud functions in this toolkit. It provisions ECR repositories and related infrastructure via the `aws_bootstrap` module from [useful-iac](https://github.com/scondo-prof/useful-iac).
 
-**Module source:** [useful-iac / aws_bootstrap](https://github.com/scondo-prof/useful-iac/tree/main/aws_bootstrap) (`ref=main`)
+**Module source:** [useful-iac / aws_bootstrap](https://github.com/scondo-prof/useful-iac/tree/bootstrap-v1.0.0/aws_bootstrap) (`ref=bootstrap-v1.0.0`)
 
 ## Overview
 
