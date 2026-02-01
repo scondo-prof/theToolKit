@@ -20,9 +20,9 @@ variable "owner" {
   description = "The owner of the resources. This will be passed via CI Variables."
 }
 
-variable "name_prefix" {
+variable "name_suffix" {
   type        = string
-  description = "The prefix for Lambda and related resource names (e.g., gh-actions-web-request)."
+  description = "The suffix for Lambda and related resource names (e.g., gh-actions-web-request)."
 }
 
 

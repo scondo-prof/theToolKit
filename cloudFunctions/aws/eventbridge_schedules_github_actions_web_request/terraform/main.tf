@@ -31,12 +31,12 @@ data "terraform_remote_state" "bootstrap" {
 }
 
 module "eventbridge_schedule_ecr_container_lambda" {
-  source = "git::https://github.com/your-org/useful-iac.git//eventbridge_schedule_ecr_container_lambda?ref=7-eventbridge-ecr-lambda"
+  source = "git::https://github.com/scondo-prof/useful-iac.git//eventbridge_schedule_ecr_container_lambda?ref=7-eventbridge-ecr-lambda"
 
   # add variables
   environment                           = var.environment
   project                               = var.project
-  name_prefix                           = var.name_prefix
+  name_suffix                           = var.name_suffix
   lambda_secret_recovery_window_in_days = var.lambda_secret_recovery_window_in_days
   lambda_log_group_retention_in_days    = var.lambda_log_group_retention_in_days
   lambda_event_rule_cron                = var.lambda_event_rule_cron

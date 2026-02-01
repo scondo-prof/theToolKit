@@ -128,20 +128,22 @@ The project uses Terraform to deploy the Lambda function and associated EventBri
    region = "us-east-1"
    ```
 
-2. **Configure Variables**: Set up `terraform/config/utils.tfvars`:
+2. **Configure Variables**: Set up `terraform/config/utils.tfvars` with **non-sensitive** values only (project, environment, owner, name_prefix, bootstrap bucket/key, lambda_event_rule_cron, ecr_image_tag). Do not put secret values in any `.tfvars` file. For sensitive variables (e.g. `lambda_secret_variables`), use `TF_VAR_*` environment variables (see "Sensitive Variables and Secrets").
    ```hcl
    project     = "gh-issues"
    environment = "root"
    owner       = "scondo-prof"
+   name_prefix = "gh-actions-web-request"
+   # ... other non-sensitive vars only
    ```
 
-3. **Initialize Terraform**:
+3. **Initialize Terraform** (quote the path in PowerShell to avoid "Too many arguments"):
    ```bash
    cd terraform
-   terraform init -backend-config=config/utils-backend.tfvars
+   terraform init -backend-config="config/utils-backend.tfvars"
    ```
 
-4. **Plan and Apply**:
+4. **Plan and Apply** (set sensitive variables via `TF_VAR_` env vars; see "Sensitive Variables and Secrets" below):
    ```bash
    terraform plan -var-file=config/utils.tfvars
    terraform apply -var-file=config/utils.tfvars
@@ -188,6 +190,8 @@ This module handles:
 #### Optional Variables
 
 - **`aws_region`**: The AWS region to deploy resources to (default: `us-east-1`)
+- **`lambda_secret_variables`**: Map of Lambda env var names to secret keys (e.g. for Secrets Manager). **Do not set in `.tfvars`.** Pass via `TF_VAR_lambda_secret_variables` (see "Sensitive Variables and Secrets").
+- **`environment_variables`**: Non-secret env vars for the Lambda. Sensitive values should go in Secrets Manager and be loaded at runtime via `SECRET_ARN`; do not put secrets here or in `.tfvars`.
 
 Backend (`bucket`, `key`, `region`) is configured via `-backend-config` only, not via variables.
 
@@ -217,8 +221,32 @@ default_tags {
 
 ### Configuration Files
 
-- **`terraform/config/utils.tfvars`**: Variable values (project, environment, owner)
-- **`terraform/config/utils-backend.tfvars`**: S3 backend configuration (bucket, key, region)
+- **`terraform/config/utils.tfvars`**: Non-sensitive variable values only (project, environment, owner, name_prefix, bootstrap state bucket/key, lambda_event_rule_cron, ecr_image_tag). Do not put secret values here.
+- **`terraform/config/utils-backend.tfvars`**: S3 backend configuration (bucket, key, region). No secrets.
+
+### Sensitive Variables and Secrets
+
+**Do not put secret values in any file under `config/` or in any `.tfvars` file.** Those files may be committed or logged; keeping secrets out of them avoids exposure.
+
+Pass sensitive Terraform variables via environment variables instead. Terraform reads variables named `TF_VAR_<variable_name>`. For map variables such as `lambda_secret_variables`, set the value to a HCL map string.
+
+**Example (PowerShell):**
+```powershell
+$env:TF_VAR_lambda_secret_variables = '{"GITHUB_TOKEN" = "github_token"}'
+terraform plan -var-file=config/utils.tfvars
+terraform apply -var-file=config/utils.tfvars
+```
+
+**Example (Bash):**
+```bash
+export TF_VAR_lambda_secret_variables='{"GITHUB_TOKEN" = "github_token"}'
+terraform plan -var-file=config/utils.tfvars
+terraform apply -var-file=config/utils.tfvars
+```
+
+Here `lambda_secret_variables` maps Lambda environment variable names to secret keys (e.g. Secrets Manager key names). The actual secret values are stored in AWS Secrets Manager; the Lambda loads them at runtime via `SECRET_ARN`. Terraform only needs the mapping, but that mapping can still be sensitive, so it is supplied via `TF_VAR_` rather than in `.tfvars`.
+
+**Future pipelines:** Sensitive values will be provided either by GitHub Actions secrets (e.g. `TF_VAR_*` set from `secrets.GITHUB_TOKEN` or other repo secrets) or by a step that fetches values from Secrets Manager and injects them as environment variables before running Terraform. The `config/` and `.tfvars` files will continue to hold only non-sensitive configuration.
 
 ## Configuration
 

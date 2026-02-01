@@ -8,7 +8,7 @@ import boto3
 sm = boto3.client("secretsmanager")
 
 
-def load_secrets_manager_environment_variables() -> bool:
+def load_secrets_manager_environment_variables() -> bool:  # TODO Add this into base image for all Lambda functions
     try:
         print("Loading secrets manager environment variables")
         secret_variables: dict[str, str] = json.loads(
