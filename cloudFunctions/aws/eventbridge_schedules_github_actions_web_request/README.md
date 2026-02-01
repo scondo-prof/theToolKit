@@ -137,7 +137,7 @@ The project uses Terraform to deploy the Lambda function and associated EventBri
    # ... other non-sensitive vars only
    ```
 
-3. **Initialize Terraform** (quote the path in PowerShell to avoid "Too many arguments"):
+3. **Initialize Terraform** (quote the path in Shell to avoid "Too many arguments"):
    ```bash
    cd terraform
    terraform init -backend-config="config/utils-backend.tfvars"
