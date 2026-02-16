@@ -31,7 +31,7 @@ All workflows in this directory are designed to be reusable across multiple repo
 
 Currently, this directory contains one reusable workflow:
 
-- **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
+- **github-issues-discord-integration.yml** (v1.0.0: `gh-wf-gh-issues-discord-integration-v1.0.0`) - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
 
 ### Adding More Reusable Workflows
 
