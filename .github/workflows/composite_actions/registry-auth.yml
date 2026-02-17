@@ -1,0 +1,31 @@
+name: Registry Auth
+description: "Authenticate to the registry"
+
+inputs:
+    auth-registry-url:
+        required: true
+        type: string
+        description: "The URL of the registry"
+    gh-username:
+        required: false
+        type: string
+        description: "The username of the GitHub Actions user"
+    gh-token:
+        required: false
+        type: string
+        description: "The token of the GitHub Actions user"
+
+runs:
+    using: "composite"
+    steps:
+        - name: Registry Auth
+          id: registry_auth
+          run: |
+              if [[ "${{ inputs.auth-registry-url }}" == *"ghcr"* ]]; then
+                registry_auth_username="${{ inputs.gh-username }}"
+                registry_auth_password="${{ inputs.gh-token }}"
+              else
+                echo "No registry credentials provided"
+                exit 1
+              fi
+              echo "$registry_auth_password" | docker login "${{ inputs.auth-registry-url }}" -u "$registry_auth_username" --password-stdin

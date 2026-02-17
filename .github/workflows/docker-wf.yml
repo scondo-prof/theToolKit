@@ -1,0 +1,53 @@
+name: Docker Workflow
+
+on:
+    workflow_call:
+        inputs:
+            build-image:
+                required: false
+                type: string
+                description: "a temp variable"
+                default: ""
+            build-image-tag:
+                required: false
+                type: string
+                description: "a temp variable"
+                default: "${{ github.ref_name }}-${{ github.sha }}"
+            gh-username:
+                required: false
+                type: string
+                description: "The username of the GitHub Actions user"
+                default: "${{ github.actor }}"
+            gh-token:
+                required: false
+                type: string
+                description: "The token of the GitHub Actions user"
+            auth-registry-build:
+                required: true
+                type: string
+                description: "The registry URL"
+                default: "ghcr.io"
+            auth-registry-push:
+                required: false
+                type: string
+                description: "The registry URL"
+                default: "ghcr"
+
+jobs:
+    build-image:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Registry Auth
+              uses: ./.github/workflows/composite_actions/registry-auth.yml
+              with:
+                  auth-registry-url: ${{ inputs.auth-registry-build }}
+                  gh-username: ${{ inputs.gh-username }}
+                  gh-token: ${{ inputs.gh-token }}
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Build Image
+              run: |
+                  docker build -t ${{ inputs.build-image }}:${{ inputs.build-image-tag }} .
+            - name: Push Image
+              run: |
+                  docker push ${{ inputs.build-image }}:${{ inputs.build-image-tag }}

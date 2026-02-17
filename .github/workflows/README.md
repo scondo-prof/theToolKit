@@ -11,11 +11,16 @@ All workflows in this directory use the `workflow_call` trigger, making them inv
 ```
 .github/workflows/
 ├── README.md                                    # This file - overview and integration guide
-├── github-issues-discord-integration.yml        # Reusable workflow (currently the only one)
+├── docker-wf.yml                                # Reusable workflow - build and push Docker images
+├── github-issues-discord-integration.yml        # Reusable workflow - Discord issue notifications
+├── composite_actions/                           # Reusable composite actions (reduce workflow bloat)
+│   ├── README.md                                # Composite action documentation
+│   └── registry-auth.yml                        # Registry authentication for Docker workflows
 ├── workflow_assets/                             # Supporting scripts and files for workflows
 │   └── periodic_issues_notification_format.py  # Python script used by workflows
 └── workflow_docs/                               # Detailed documentation for each workflow
-    └── github-issues-discord-integration.md     # Documentation for the issues integration workflow
+    ├── docker-wf.md                             # Docker workflow documentation
+    └── github-issues-discord-integration.md     # Issues integration workflow documentation
 ```
 
 ### Reusability
@@ -29,9 +34,11 @@ All workflows in this directory are designed to be reusable across multiple repo
 
 ## Available Workflows
 
-Currently, this directory contains one reusable workflow:
+This directory contains the following reusable workflows:
 
-- **github-issues-discord-integration.yml** - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
+- **github-issues-discord-integration.yml** (v1.0.0: `gh-wf-gh-issues-discord-integration-v1.0.0`) - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
+
+- **docker-wf.yml** - Builds and pushes Docker images to a container registry (e.g., GHCR). Uses the registry-auth composite action for authentication. See [detailed documentation](workflow_docs/docker-wf.md) for usage instructions.
 
 ### Adding More Reusable Workflows
 
@@ -99,6 +106,40 @@ When creating new reusable workflows, follow these guidelines:
 6. **Version your workflows** - When making breaking changes, consider using tags or branches for versioning
 
 7. **Test before sharing** - Test workflows thoroughly before making them available to other repositories
+
+8. **Use composite actions** - Extract repeated step sequences into composite actions to reduce code bloat (see [Composite Actions](#composite-actions) below)
+
+## Composite Actions
+
+Workflows in this directory use **composite actions** to avoid duplicating common step sequences. Composite actions are reusable YAML-defined actions that bundle multiple steps into a single `uses:` step.
+
+### Benefits
+
+- **Reduces code bloat** – Shared logic (e.g., registry auth, setup) lives in one place
+- **Easier maintenance** – Fix or enhance logic once; all workflows benefit
+- **Consistent behavior** – Same steps run the same way across workflows
+- **Cleaner workflows** – Workflows stay focused on orchestration, not implementation details
+
+### Available Composite Actions
+
+- **registry-auth** (`.github/workflows/composite_actions/registry-auth.yml`) – Authenticates to container registries (GHCR). Used by `docker-wf.yml`. See [composite_actions/docs/registry-auth.md](composite_actions/docs/registry-auth.md) for full documentation.
+
+### Using Composite Actions
+
+```yaml
+steps:
+  - uses: ./.github/workflows/composite_actions/registry-auth.yml
+    with:
+      auth-registry-url: ghcr.io
+      gh-username: ${{ github.actor }}
+      gh-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Creating New Composite Actions
+
+1. Create a `.yml` file in `.github/workflows/composite_actions/`
+2. Define `inputs` and `runs.using: "composite"` with `runs.steps`
+3. Add a doc file in [composite_actions/docs/](composite_actions/docs/) and add the action to the README table
 
 ## Workflow Assets
 
