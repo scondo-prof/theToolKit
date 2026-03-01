@@ -3,7 +3,7 @@ name: Docker Workflow
 on:
     workflow_call:
         inputs:
-            run-build-image-job:
+            run-docker-build-image-job:
                 required: false
                 type: boolean
                 description: "Run the build image job"
@@ -46,7 +46,7 @@ on:
 jobs:
     docker-build-image:
         runs-on: ubuntu-latest
-        if: inputs.run-build-image-job
+        if: inputs.run-docker-build-image-job
         steps:
             - name: Registry Auth
               uses: ./.github/workflows/composite_actions/registry-auth.yml
