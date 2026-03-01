@@ -190,6 +190,7 @@ This module handles:
 #### Optional Variables
 
 - **`aws_region`**: The AWS region to deploy resources to (default: `us-east-1`)
+- **`lambda_event_rule_cron`**: EventBridge cron expression for when the Lambda runs (e.g. `0 1 1 * ? *` = 1:00 AM UTC on the first day of every month).
 - **`lambda_secret_variables`**: Map of Lambda env var names to secret keys (e.g. for Secrets Manager). **Do not set in `.tfvars`.** Pass via `TF_VAR_lambda_secret_variables` (see "Sensitive Variables and Secrets").
 - **`environment_variables`**: Non-secret env vars for the Lambda. Sensitive values should go in Secrets Manager and be loaded at runtime via `SECRET_ARN`; do not put secrets here or in `.tfvars`.
 

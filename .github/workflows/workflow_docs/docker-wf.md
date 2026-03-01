@@ -8,10 +8,12 @@ This reusable GitHub Actions workflow builds and pushes Docker images to a conta
 
 When called from another repository or workflow, this workflow:
 
-1. **Authenticates to the registry** – Uses the registry-auth composite action to log in (supports GHCR)
-2. **Checks out the repository** – Gets the source code for the Docker build
-3. **Builds the Docker image** – Runs `docker build` with the specified image name and tag
-4. **Pushes the image** – Pushes the built image to the registry
+1. **Runs the build job only when requested** – The `build-image` job runs only when the `run-build-image-job` input is `true`.
+2. **Authenticates to the registry** – Uses the registry-auth composite action to log in (supports GHCR)
+3. **Checks out the repository** – Gets the source code for the Docker build
+4. **Navigates to project path** – Changes to the directory specified by `project-path` (default `"."`) before building
+5. **Builds the Docker image** – Runs `docker build` with the specified image name and tag
+6. **Pushes the image** – Pushes the built image to the registry
 
 ## Prerequisites
 
@@ -22,16 +24,18 @@ When called from another repository or workflow, this workflow:
 
 ## Workflow Inputs
 
-| Input                | Type   | Required | Default                     | Description                                                |
-| -------------------- | ------ | -------- | --------------------------- | ---------------------------------------------------------- |
-| `build-image`        | string | false    | `""`                        | Full image name (e.g., `ghcr.io/owner/repo`). Must be set. |
-| `build-image-tag`    | string | false    | *(see note)*                | Tag for the image. Default uses ref and SHA.               |
-| `gh-username`        | string | false    | `${{ github.actor }}`       | Registry username (for GHCR, typically the GitHub actor).  |
-| `gh-token`           | string | false    | -                           | Token for registry authentication. Pass via `secrets`.     |
-| `auth-registry-build`| string | true     | `"ghcr.io"`                 | Registry URL for login (e.g., `ghcr.io`).                  |
-| `auth-registry-push` | string | false    | `"ghcr"`                    | Registry identifier used by registry-auth for push logic.  |
+| Input                   | Type    | Required | Default                     | Description                                                                 |
+| ----------------------- | ------- | -------- | --------------------------- | --------------------------------------------------------------------------- |
+| `run-build-image-job`   | boolean | false    | `false`                     | When `true`, runs the build-image job. When `false`, the job is skipped.    |
+| `project-path`          | string  | false    | `"."`                       | Path to the project (directory containing the Dockerfile) for build context.|
+| `build-image`           | string  | false    | `""`                        | Full image name (e.g., `ghcr.io/owner/repo`). Must be set.                   |
+| `build-image-tag`       | string  | false    | *(see note)*                | Tag for the image. Default uses ref and SHA.                                |
+| `gh-username`           | string  | false    | `${{ github.actor }}`       | Registry username (for GHCR, typically the GitHub actor).                   |
+| `gh-token`              | string  | false    | -                           | Token for registry authentication. Pass via `secrets`.                      |
+| `auth-registry-build`   | string  | true     | `"ghcr.io"`                 | Registry URL for login (e.g., `ghcr.io`).                                  |
+| `auth-registry-push`    | string  | false    | `"ghcr"`                    | Registry identifier used by registry-auth for push logic.                   |
 
-**Note:** `build-image-tag` default expressions in `workflow_call` inputs are limited; callers should explicitly pass `build-image` and `build-image-tag` when using this workflow.
+**Note:** The build-image job runs only when `run-build-image-job` is `true`. Callers can use this to run the workflow without building (e.g., when other jobs run) or to build only when needed. `build-image-tag` default expressions in `workflow_call` inputs are limited; callers should explicitly pass `build-image` and `build-image-tag` when using this workflow.
 
 ## Usage
 
@@ -48,6 +52,8 @@ jobs:
   build:
     uses: ./.github/workflows/docker-wf.yml
     with:
+      run-build-image-job: true
+      project-path: .
       build-image: ghcr.io/${{ github.repository }}
       build-image-tag: ${{ github.sha }}
     secrets:

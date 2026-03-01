@@ -3,6 +3,16 @@ name: Docker Workflow
 on:
     workflow_call:
         inputs:
+            run-build-image-job:
+                required: false
+                type: boolean
+                description: "Run the build image job"
+                default: false
+            project-path:
+                required: false
+                type: string
+                description: "The path to the project"
+                default: "."
             build-image:
                 required: false
                 type: string
@@ -36,6 +46,7 @@ on:
 jobs:
     build-image:
         runs-on: ubuntu-latest
+        if: inputs.run-build-image-job
         steps:
             - name: Registry Auth
               uses: ./.github/workflows/composite_actions/registry-auth.yml
@@ -45,6 +56,9 @@ jobs:
                   gh-token: ${{ inputs.gh-token }}
             - name: Checkout code
               uses: actions/checkout@v4
+            - name: Navigate to Project Path
+              run: |
+                  cd ${{ inputs.project-path }}
             - name: Build Image
               run: |
                   docker build -t ${{ inputs.build-image }}:${{ inputs.build-image-tag }} .
