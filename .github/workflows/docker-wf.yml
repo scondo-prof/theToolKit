@@ -44,7 +44,7 @@ on:
                 default: "ghcr"
 
 jobs:
-    build-image:
+    docker-build-image:
         runs-on: ubuntu-latest
         if: inputs.run-build-image-job
         steps:
@@ -61,7 +61,7 @@ jobs:
                   cd ${{ inputs.project-path }}
             - name: Build Image
               run: |
-                  docker build -t ${{ inputs.build-image }}:${{ inputs.build-image-tag }} .
+                  docker build -t ${{ inputs.build-image }}:${{ inputs.build-image-tag }} . #TODO: add build args && context variables
             - name: Push Image
               run: |
                   docker push ${{ inputs.build-image }}:${{ inputs.build-image-tag }}
