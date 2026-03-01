@@ -23,15 +23,6 @@ on:
                 type: string
                 description: "a temp variable"
                 default: "${{ github.ref_name }}-${{ github.sha }}"
-            gh-username:
-                required: false
-                type: string
-                description: "The username of the GitHub Actions user"
-                default: "${{ github.actor }}"
-            gh-token:
-                required: false
-                type: string
-                description: "The token of the GitHub Actions user"
             auth-registry-build:
                 required: true
                 type: string
@@ -41,8 +32,14 @@ on:
                 required: false
                 type: string
                 description: "The registry URL"
-                default: "ghcr"
-
+                default: "ghcr.io"
+        secrets:
+            GH_TOKEN:
+                required: true
+                description: "The token of the GitHub Actions user"
+            GH_USERNAME:
+                required: true
+                description: "The username of the GitHub Actions user"
 jobs:
     docker-build-image:
         runs-on: ubuntu-latest
@@ -52,8 +49,8 @@ jobs:
               uses: ./.github/workflows/composite_actions/registry-auth.yml
               with:
                   auth-registry-url: ${{ inputs.auth-registry-build }}
-                  gh-username: ${{ inputs.gh-username }}
-                  gh-token: ${{ inputs.gh-token }}
+                  gh-username: ${{ secrets.GH_USERNAME }}
+                  gh-token: ${{ secrets.GH_TOKEN }}
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Navigate to Project Path
