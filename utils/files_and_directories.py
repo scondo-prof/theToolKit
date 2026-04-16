@@ -2,6 +2,8 @@ import os
 import shutil
 import argparse
 
+import pendulum
+
 
 import os
 
@@ -29,6 +31,8 @@ def move_file(source_path: str, destination_path: str):
 
 def filename_prefix_append(method: str, prefix: str):
     """Appends a Prefix to designated file/files."""
+    if prefix == "date":
+        prefix = f"{pendulum.now().format('YYYY-MM-DD')}_"
     if method == "cwd":
         for file_name in os.listdir():
             if os.path.isfile(file_name):
@@ -37,9 +41,9 @@ def filename_prefix_append(method: str, prefix: str):
     elif method == "recursive":
         file_list: list[str] = list_files_recursively(dir_path=".")
         for file_name in file_list:
-            file_name_list: list[str] = file_name.split("\\")
+            file_name_list: list[str] = file_name.split("/")
             file_name_list[-1] = f"{prefix}{file_name_list[-1]}"
-            new_file_name: str = "\\".join(file_name_list)
+            new_file_name: str = "/".join(file_name_list)
             os.rename(src=file_name, dst=new_file_name)
             print(f"{file_name} -> {new_file_name}")
     else:
@@ -70,7 +74,7 @@ def main():
         choices=["cwd", "recursive"],
         help="How to apply the prefix",
     )
-    parser_move.add_argument("prefix", help="Prefix to append to file/files.")
+    parser_move.add_argument("prefix", help="Prefix to append to file/files.", type=str, default="date")
     parser_move.set_defaults(func=filename_prefix_append)
 
     args = parser.parse_args()
