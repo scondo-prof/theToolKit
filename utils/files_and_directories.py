@@ -1,11 +1,9 @@
-import os
-import shutil
 import argparse
+import os
+import re
+import shutil
 
 import pendulum
-
-
-import os
 
 
 def list_files_recursively(dir_path: str) -> list[str]:
@@ -16,8 +14,19 @@ def list_files_recursively(dir_path: str) -> list[str]:
             relative_path = os.path.relpath(os.path.join(root, file), start=dir_path)
             file_list.append(relative_path)
 
-    print(file_list)
+    print(f"Files: {file_list}")
     return file_list
+
+
+def list_directories_recursively(dir_path: str) -> list[str]:
+    """Recursively list all directories in a directory, showing relative paths."""
+    directory_list: list[str] = []
+    for root, dirs, _ in os.walk(dir_path):
+        for dir in dirs:
+            relative_path = os.path.relpath(os.path.join(root, dir), start=dir_path)
+            directory_list.append(relative_path)
+    print(f"Directories: {directory_list}")
+    return directory_list
 
 
 def move_file(source_path: str, destination_path: str):
@@ -29,20 +38,36 @@ def move_file(source_path: str, destination_path: str):
         print(f"Failed to move file from {source_path} to {destination_path}: {e}")
 
 
+# Leading YYYY-MM-DD_ on the basename (pendulum date prefix format).
+_DATE_PREFIX_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}_")
+
+
+def _basename_starts_with_date_prefix(basename: str) -> bool:
+    return bool(_DATE_PREFIX_PATTERN.match(basename))
+
+
 def filename_prefix_append(method: str, prefix: str):
     """Appends a Prefix to designated file/files."""
-    if prefix == "date":
+    is_date_prefix = prefix == "date"
+    if is_date_prefix:
         prefix = f"{pendulum.now().format('YYYY-MM-DD')}_"
     if method == "cwd":
         for file_name in os.listdir():
             if os.path.isfile(file_name):
+                if is_date_prefix and _basename_starts_with_date_prefix(file_name):
+                    print(f"Skip (already has date prefix): {file_name}")
+                    continue
                 os.rename(src=file_name, dst=f"{prefix}{file_name}")
                 print(f"{file_name} -> {prefix}{file_name}")
     elif method == "recursive":
         file_list: list[str] = list_files_recursively(dir_path=".")
         for file_name in file_list:
             file_name_list: list[str] = file_name.split("/")
-            file_name_list[-1] = f"{prefix}{file_name_list[-1]}"
+            basename = file_name_list[-1]
+            if is_date_prefix and _basename_starts_with_date_prefix(basename):
+                print(f"Skip (already has date prefix): {file_name}")
+                continue
+            file_name_list[-1] = f"{prefix}{basename}"
             new_file_name: str = "/".join(file_name_list)
             os.rename(src=file_name, dst=new_file_name)
             print(f"{file_name} -> {new_file_name}")
@@ -61,6 +86,13 @@ def main():
     parser_list.add_argument("dir_path", help="Path to the target directory.")
     parser_list.set_defaults(func=list_files_recursively)
 
+    # list_directories_recursively command
+    parser_list = subparsers.add_parser(
+        "list_directories_recursively", help="Recursively list all directories in a directory, showing relative paths."
+    )
+    parser_list.add_argument("dir_path", help="Path to the target directory.")
+    parser_list.set_defaults(func=list_directories_recursively)
+
     # move_file command
     parser_move = subparsers.add_parser("move_file", help="Move a file from source to destination.")
     parser_move.add_argument("source_path", help="Path to the file to move.")
@@ -74,7 +106,9 @@ def main():
         choices=["cwd", "recursive"],
         help="How to apply the prefix",
     )
-    parser_move.add_argument("prefix", help="Prefix to append to file/files.", type=str, default="date")
+    parser_move.add_argument(
+        "prefix", help="Prefix to append to file/files. Put 'date' to append the current date prefix.", type=str
+    )
     parser_move.set_defaults(func=filename_prefix_append)
 
     args = parser.parse_args()
