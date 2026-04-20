@@ -48,7 +48,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
             - name: Registry Auth
-              uses: ./.github/workflows/composite_actions/registry-auth.yml
+              uses: ./.github/workflows/composite_actions/action.yml
               with:
                   auth-registry-url: ${{ inputs.auth-registry-build }}
                   gh-username: ${{ secrets.GH_USERNAME }}
