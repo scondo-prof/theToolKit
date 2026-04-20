@@ -38,8 +38,6 @@ This directory contains the following reusable workflows:
 
 - **github-issues-discord-integration.yml** (v1.0.0: `gh-wf-gh-issues-discord-integration-v1.0.0`) - Monitors GitHub issue events and sends formatted notifications to Discord. Supports both real-time issue event notifications and manual periodic issue updates. See [detailed documentation](workflow_docs/github-issues-discord-integration.md) for usage instructions.
 
-- **docker-wf.yml** - Builds and pushes Docker images to a container registry (e.g., GHCR). Uses the registry-auth composite action for authentication. See [detailed documentation](workflow_docs/docker-wf.md) for usage instructions.
-
 ### Adding More Reusable Workflows
 
 To add additional reusable workflows to this directory:
@@ -61,7 +59,6 @@ To add additional reusable workflows to this directory:
    ```
 
 3. **Create documentation** - Add a markdown file in `workflow_docs/` directory (e.g., `workflow_docs/workflow-name.md`) that explains:
-
    - What the workflow does
    - Required inputs and secrets
    - How to use it
@@ -95,7 +92,6 @@ When creating new reusable workflows, follow these guidelines:
 3. **Use conditional execution** - Use `if` conditions to control when jobs run based on inputs or event context
 
 4. **Document thoroughly** - Create comprehensive documentation in `workflow_docs/` that includes:
-
    - Overview and purpose
    - Required inputs and secrets
    - Usage examples

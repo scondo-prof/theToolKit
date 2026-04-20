@@ -1,5 +1,11 @@
 # GitHub Issues Discord Integration Workflow
 
+## Version
+
+- **v1.0.0** (tag: `gh-wf-gh-issues-discord-integration-v1.0.0`) - Initial release
+
+Callers can pin to this version using `@gh-wf-gh-issues-discord-integration-v1.0.0` or use `@main` for the latest changes.
+
 ## Overview
 
 This reusable GitHub Actions workflow provides two independent jobs for monitoring GitHub issues and sending notifications to Discord:

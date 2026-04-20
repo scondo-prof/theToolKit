@@ -93,6 +93,8 @@ if __name__ == "__main__":
 
     asyncio.run(bulk_s3_upload(s3_path=user_s3_path, s3_bucket=user_s3_bucket))
 
+    print("================= Upload Complete =================\n")
+
 # asyncio.run(upload_s3_obj(file_name="z.txt", s3_key="test/z.txt"))
 
 # asyncio.run(bulk_s3_upload(s3_path="test/"))
