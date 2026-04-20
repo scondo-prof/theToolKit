@@ -45,14 +45,14 @@ jobs:
         runs-on: ubuntu-latest
         if: inputs.trigger-docker-build-image
         steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
             - name: Registry Auth
               uses: ./.github/workflows/composite_actions/registry-auth.yml
               with:
                   auth-registry-url: ${{ inputs.auth-registry-build }}
                   gh-username: ${{ secrets.GH_USERNAME }}
                   gh-token: ${{ secrets.GH_TOKEN }}
-            - name: Checkout code
-              uses: actions/checkout@v4
             - name: Navigate to Project Path
               run: |
                   cd ${{ inputs.project-path }}

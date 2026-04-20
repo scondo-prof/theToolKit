@@ -69,12 +69,14 @@ def trigger_github_workflow_dispatch(
         response = httpx.post(url, headers=headers, json=payload, timeout=30.0)
 
         if response.status_code == 204:
+            print(f"Workflow dispatch triggered successfully: {response.status_code}", flush=True)
             return {
                 "status_code": response.status_code,
                 "message": "Workflow dispatch triggered successfully",
                 "success": True,
             }
         else:
+            print(f"Error: {response.text}", flush=True)
             return {
                 "status_code": response.status_code,
                 "message": f"Error: {response.text}",
@@ -82,6 +84,7 @@ def trigger_github_workflow_dispatch(
                 "response_body": response.text,
             }
     except httpx.RequestError as e:
+        print(f"Request error: {str(e)}", flush=True)
         return {"status_code": 500, "message": f"Request error: {str(e)}", "success": False}
 
 
@@ -136,6 +139,14 @@ def main(event: dict, context: dict) -> dict:
 
 
 if __name__ == "__main__":
-    test_event = {}
-    result = main(event=test_event, context={})
-    print(f"Lambda response: {result}")
+    # test_event = {}
+    # result = main(event=test_event, context={})
+    # print(f"Lambda response: {result}")
+    trigger_github_workflow_dispatch(
+        owner="scondo-prof",
+        repo="the_ticketing_system",
+        workflow_id="docker-build.yml",
+        github_token=os.environ.get("GITHUB_TOKEN"),
+        ref="main",
+        inputs=None,
+    )
